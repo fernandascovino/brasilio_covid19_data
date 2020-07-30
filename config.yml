@@ -1,0 +1,443 @@
+PR:
+  model: PR_modelo.xlsx
+  rename:
+    MUNICIPIO: municipio
+    CONFIRMADOS: confirmados
+    OBITOS: mortes
+    REGIONAL DE SAUDE: regional
+    Município de residência: municipio
+    Casos: confirmados
+    Óbitos: mortes
+    RS: regional
+    Município PR: municipio
+    RS_RES_PR: regional
+    Casos: confirmados
+  keep: [municipio, confirmados, mortes]
+  fora_pr: ["FORA DO PARANA", "FORA DO PR", "OUTROS ESTADOS"]
+  typos:
+    ABATIA: "Abati\xE1"
+    ADRIANOPOLIS: "Adrian\xF3polis"
+    AGUDOS DO SUL: Agudos do Sul
+    ALMIRANTE TAMANDARE: "Almirante Tamandar\xE9"
+    ALTAMIRA DO PARANA: "Altamira do Paran\xE1"
+    ALTO PARAISO: "Alto Para\xEDso"
+    ALTO PARANA: "Alto Paran\xE1"
+    ALTO PIQUIRI: Alto Piquiri
+    ALTONIA: "Alt\xF4nia"
+    ALVORADA DO SUL: Alvorada do Sul
+    AMAPORA: "Amapor\xE3"
+    AMPERE: "Amp\xE9re"
+    ANAHY: Anahy
+    ANDIRA: "Andir\xE1"
+    ANGULO: "\xC2ngulo"
+    ANTONINA: Antonina
+    ANTONIO OLINTO: "Ant\xF4nio Olinto"
+    APUCARANA: Apucarana
+    ARAPONGAS: Arapongas
+    ARAPOTI: Arapoti
+    ARAPUA: "Arapu\xE3"
+    ARARUNA: Araruna
+    ARAUCARIA: "Arauc\xE1ria"
+    ARIRANHA DO IVAI: "Ariranha do Iva\xED"
+    ASSAI: "Assa\xED"
+    ASSIS CHATEAUBRIAND: Assis Chateaubriand
+    ASTORGA: Astorga
+    ATALAIA: Atalaia
+    BALSA NOVA: Balsa Nova
+    BANDEIRANTES: Bandeirantes
+    BARBOSA FERRAZ: Barbosa Ferraz
+    BARRA DO JACARE: "Barra do Jacar\xE9"
+    BARRACAO: "Barrac\xE3o"
+    BELA VISTA DA CAROBA: Bela Vista da Caroba
+    BELA VISTA DO CAROBA: Bela Vista da Caroba
+    BELA VISTA DO PARAISO: "Bela Vista do Para\xEDso"
+    BITURUNA: Bituruna
+    BOA ESPERANCA: "Boa Esperan\xE7a"
+    BOA ESPERANCA DO IGUACU: "Boa Esperan\xE7a do Igua\xE7u"
+    BOA VENTURA DE SAO ROQUE: "Boa Ventura de S\xE3o Roque"
+    BOA VISTA DA APARECIDA: Boa Vista da Aparecida
+    BOCAIUVA DO SUL: "Bocai\xFAva do Sul"
+    BOM JESUS DO SUL: Bom Jesus do Sul
+    BOM SUCESSO: Bom Sucesso
+    BOM SUCESSO DO SUL: Bom Sucesso do Sul
+    BORRAZOPOLIS: "Borraz\xF3polis"
+    BRAGANEY: Braganey
+    BRASILANDIA DO SUL: "Brasil\xE2ndia do Sul"
+    CAFEARA: Cafeara
+    CAFELANDIA: "Cafel\xE2ndia"
+    CAFEZAL DO SUL: Cafezal do Sul
+    CALIFORNIA: "Calif\xF3rnia"
+    CAMBARA: "Cambar\xE1"
+    CAMBE: "Camb\xE9"
+    CAMBIRA: Cambira
+    CAMPINA DA LAGOA: Campina da Lagoa
+    CAMPINA DO SIMAO: "Campina do Sim\xE3o"
+    CAMPINA GRANDE DO SUL: Campina Grande do Sul
+    CAMPO BONITO: Campo Bonito
+    CAMPO DO TENENTE: Campo do Tenente
+    CAMPO LARGO: Campo Largo
+    CAMPO MAGRO: Campo Magro
+    CAMPO MOURAO: "Campo Mour\xE3o"
+    CANDIDO DE ABREU: "C\xE2ndido de Abreu"
+    CANDOI: "Cand\xF3i"
+    CANTAGALO: Cantagalo
+    CAPANEMA: Capanema
+    CAPITAO LEONIDAS MARQUES: "Capit\xE3o Le\xF4nidas Marques"
+    CARAMBEI: "Carambe\xED"
+    CARLOPOLIS: "Carl\xF3polis"
+    CASCAVEL: Cascavel
+    CASTRO: Castro
+    CATANDUVAS: Catanduvas
+    CENTENARIO DO SUL: "Centen\xE1rio do Sul"
+    CERRO AZUL: Cerro Azul
+    CEU AZUL: "C\xE9u Azul"
+    CHOPINZINHO: Chopinzinho
+    CIANORTE: Cianorte
+    CIDADE GAUCHA: "Cidade Ga\xFAcha"
+    CLEVELANDIA: "Clevel\xE2ndia"
+    COLOMBO: Colombo
+    COLORADO: Colorado
+    CONGONHINHAS: Congonhinhas
+    CONSELHEIRO MAIRINCK: Conselheiro Mairinck
+    CONTENDA: Contenda
+    CORBELIA: "Corb\xE9lia"
+    CORNELIO PROCOPIO: "Corn\xE9lio Proc\xF3pio"
+    CORONEL DOMINGOS SOARES: Coronel Domingos Soares
+    CORONEL VIVIDA: Coronel Vivida
+    CORUMBATAI DO SUL: "Corumbata\xED do Sul"
+    CRUZ MACHADO: Cruz Machado
+    CRUZEIRO DO IGUACU: "Cruzeiro do Igua\xE7u"
+    CRUZEIRO DO OESTE: Cruzeiro do Oeste
+    CRUZEIRO DO SUL: Cruzeiro do Sul
+    CRUZMALTINA: Cruzmaltina
+    CURITIBA: Curitiba
+    CURIUVA: "Curi\xFAva"
+    DIAMANTE D'OESTE: Diamante D'Oeste
+    DIAMANTE D''OESTE: Diamante D'Oeste
+    DIAMANTE DO NORTE: Diamante do Norte
+    DIAMANTE DO SUL: Diamante do Sul
+    DOIS VIZINHOS: Dois Vizinhos
+    DOURADINA: Douradina
+    DOUTOR CAMARGO: Doutor Camargo
+    DOUTOR ULYSSES: Doutor Ulysses
+    ENEAS MARQUES: "En\xE9as Marques"
+    ENGENHEIRO BELTRAO: "Engenheiro Beltr\xE3o"
+    ENTRE RIOS DO OESTE: Entre Rios do Oeste
+    ESPERANCA NOVA: "Esperan\xE7a Nova"
+    ESPIGAO ALTO DO IGUACU: "Espig\xE3o Alto do Igua\xE7u"
+    FAROL: Farol
+    FAXINAL: Faxinal
+    FAZENDA RIO GRANDE: Fazenda Rio Grande
+    FENIX: "F\xEAnix"
+    FERNANDES PINHEIRO: Fernandes Pinheiro
+    FIGUEIRA: Figueira
+    FLOR DA SERRA DO SUL: Flor da Serra do Sul
+    FLORAI: "Flora\xED"
+    FLORESTA: Floresta
+    FLORESTOPOLIS: "Florest\xF3polis"
+    FLORIDA: "Fl\xF3rida"
+    FORMOSA DO OESTE: Formosa do Oeste
+    FOZ DO IGUACU: "Foz do Igua\xE7u"
+    FOZ DO JORDAO: "Foz do Jord\xE3o"
+    FRANCISCO ALVES: Francisco Alves
+    FRANCISCO BELTRAO: "Francisco Beltr\xE3o"
+    GENERAL CARNEIRO: General Carneiro
+    GODOY MOREIRA: Godoy Moreira
+    GOIOERE: "Goioer\xEA"
+    GOIOXIM: Goioxim
+    GRANDES RIOS: Grandes Rios
+    GUAIRA: "Gua\xEDra"
+    GUAIRACA: "Guaira\xE7\xE1"
+    GUAMIRANGA: Guamiranga
+    GUAPIRAMA: Guapirama
+    GUAPOREMA: Guaporema
+    GUARACI: Guaraci
+    GUARANIACU: "Guarania\xE7u"
+    GUARAPUAVA: Guarapuava
+    GUARAQUECABA: "Guaraque\xE7aba"
+    GUARATUBA: Guaratuba
+    HONORIO SERPA: "Hon\xF3rio Serpa"
+    IBAITI: Ibaiti
+    IBEMA: Ibema
+    IBIPORA: "Ibipor\xE3"
+    ICARAIMA: "Icara\xEDma"
+    IGUARACU: "Iguara\xE7u"
+    IGUATU: Iguatu
+    IMBAU: "Imba\xFA"
+    IMBITUVA: Imbituva
+    IMPORTADOS/INDEFINIDOS: Importados/Indefinidos
+    INACIO MARTINS: "In\xE1cio Martins"
+    INAJA: "Inaj\xE1"
+    INDIANOPOLIS: "Indian\xF3polis"
+    IPIRANGA: Ipiranga
+    IPORA: "Ipor\xE3"
+    IRACEMA DO OESTE: Iracema do Oeste
+    IRATI: Irati
+    IRETAMA: Iretama
+    ITAGUAJE: "Itaguaj\xE9"
+    ITAIPULANDIA: "Itaipul\xE2ndia"
+    ITAMBARACA: "Itambarac\xE1"
+    ITAMBE: "Itamb\xE9"
+    ITAPEJARA D'OESTE: Itapejara d'Oeste
+    ITAPERUCU: "Itaperu\xE7u"
+    ITAUNA DO SUL: "Ita\xFAna do Sul"
+    IVAI: "Iva\xED"
+    IVAIPORA: "Ivaipor\xE3"
+    IVATE: "Ivat\xE9"
+    IVATUBA: Ivatuba
+    JABOTI: Jaboti
+    JACAREZINHO: Jacarezinho
+    JAGUAPITA: "Jaguapit\xE3"
+    JAGUARIAIVA: "Jaguaria\xEDva"
+    JANDAIA DO SUL: Jandaia do Sul
+    JANIOPOLIS: "Jani\xF3polis"
+    JAPIRA: Japira
+    JAPURA: "Japur\xE1"
+    JARDIM ALEGRE: Jardim Alegre
+    JARDIM OLINDA: Jardim Olinda
+    JATAIZINHO: Jataizinho
+    JESUITAS: "Jesu\xEDtas"
+    JOAQUIM TAVORA: "Joaquim T\xE1vora"
+    JUNDIAI DO SUL: "Jundia\xED do Sul"
+    JURANDA: Juranda
+    JUSSARA: Jussara
+    KALORE: "Kalor\xE9"
+    LAPA: Lapa
+    LARANJAL: Laranjal
+    LARANJEIRAS DO SUL: Laranjeiras do Sul
+    LEOPOLIS: "Le\xF3polis"
+    LIDIANOPOLIS: "Lidian\xF3polis"
+    LINDOESTE: Lindoeste
+    LOANDA: Loanda
+    LOBATO: Lobato
+    LONDRINA: Londrina
+    LUIZIANA: Luiziana
+    LUNARDELLI: Lunardelli
+    LUPIONOPOLIS: "Lupion\xF3polis"
+    MALLET: Mallet
+    MAMBORE: "Mambor\xEA"
+    MANDAGUACU: "Mandagua\xE7u"
+    MANDAGUARI: Mandaguari
+    MANDIRITUBA: Mandirituba
+    MANFRINOPOLIS: "Manfrin\xF3polis"
+    MANGUEIRINHA: Mangueirinha
+    MANOEL RIBAS: Manoel Ribas
+    MARECHAL CANDIDO RONDON: "Marechal C\xE2ndido Rondon"
+    MARIA HELENA: Maria Helena
+    MARIALVA: Marialva
+    MARILANDIA DO SUL: "Maril\xE2ndia do Sul"
+    MARILENA: Marilena
+    MARILUZ: Mariluz
+    MARINGA: "Maring\xE1"
+    MARIOPOLIS: "Mari\xF3polis"
+    MARIPA: "Marip\xE1"
+    MARMELEIRO: Marmeleiro
+    MARQUINHO: Marquinho
+    MARUMBI: Marumbi
+    MATELANDIA: "Matel\xE2ndia"
+    MATINHOS: Matinhos
+    MATO RICO: Mato Rico
+    MAUA DA SERRA: "Mau\xE1 da Serra"
+    MEDIANEIRA: Medianeira
+    MERCEDES: Mercedes
+    MIRADOR: Mirador
+    MIRASELVA: Miraselva
+    MISSAL: Missal
+    MOREIRA SALES: Moreira Sales
+    MORRETES: Morretes
+    MUNHOZ DE MELO: Munhoz de Melo
+    MUNHOZ DE MELLO: Munhoz de Melo
+    NOSSA SENHORA DAS GRACAS: "Nossa Senhora das Gra\xE7as"
+    NOVA ALIANCA DO IVAI: "Nova Alian\xE7a do Iva\xED"
+    NOVA AMERICA DA COLINA: "Nova Am\xE9rica da Colina"
+    NOVA AURORA: Nova Aurora
+    NOVA CANTU: Nova Cantu
+    NOVA ESPERANCA: "Nova Esperan\xE7a"
+    NOVA ESPERANCA DO SUDOESTE: "Nova Esperan\xE7a do Sudoeste"
+    NOVA FATIMA: "Nova F\xE1tima"
+    NOVA LARANJEIRAS: Nova Laranjeiras
+    NOVA LONDRINA: Nova Londrina
+    NOVA OLIMPIA: "Nova Ol\xEDmpia"
+    NOVA PRATA DO IGUACU: "Nova Prata do Igua\xE7u"
+    NOVA SANTA BARBARA: "Nova Santa B\xE1rbara"
+    NOVA SANTA ROSA: Nova Santa Rosa
+    NOVA TEBAS: Nova Tebas
+    NOVO ITACOLOMI: Novo Itacolomi
+    ORTIGUEIRA: Ortigueira
+    OURIZONA: Ourizona
+    OURO VERDE DO OESTE: Ouro Verde do Oeste
+    PAICANDU: "Pai\xE7andu"
+    PALMAS: Palmas
+    PALMEIRA: Palmeira
+    PALMITAL: Palmital
+    PALOTINA: Palotina
+    PARAISO DO NORTE: "Para\xEDso do Norte"
+    PARANACITY: Paranacity
+    PARANAGUA: "Paranagu\xE1"
+    PARANAPOEMA: Paranapoema
+    PARANAVAI: "Paranava\xED"
+    PATO BRAGADO: Pato Bragado
+    PATO BRANCO: Pato Branco
+    PAULA FREITAS: Paula Freitas
+    PAULO FRONTIN: Paulo Frontin
+    PEABIRU: Peabiru
+    PEROBAL: Perobal
+    PEROLA: "P\xE9rola"
+    PEROLA D'OESTE: "P\xE9rola d'Oeste"
+    PEROLA D''OESTE: "P\xE9rola d'Oeste"
+    PIEN: "Pi\xEAn"
+    PINHAIS: Pinhais
+    PINHAL DE SAO BENTO: "Pinhal de S\xE3o Bento"
+    PINHALAO: "Pinhal\xE3o"
+    PINHAO: "Pinh\xE3o"
+    PIRAI DO SUL: "Pira\xED do Sul"
+    PIRAQUARA: Piraquara
+    PITANGA: Pitanga
+    PITANGUEIRAS: Pitangueiras
+    PLANALTINA DO PARANA: "Planaltina do Paran\xE1"
+    PLANALTO: Planalto
+    PONTA GROSSA: Ponta Grossa
+    PONTAL DO PARANA: "Pontal do Paran\xE1"
+    PORECATU: Porecatu
+    PORTO AMAZONAS: Porto Amazonas
+    PORTO BARREIRO: Porto Barreiro
+    PORTO RICO: Porto Rico
+    PORTO VITORIA: "Porto Vit\xF3ria"
+    PRADO FERREIRA: Prado Ferreira
+    PRANCHITA: Pranchita
+    PRESIDENTE CASTELO BRANCO: Presidente Castelo Branco
+    PRIMEIRO DE MAIO: Primeiro de Maio
+    PRUDENTOPOLIS: "Prudent\xF3polis"
+    QUARTO CENTENARIO: "Quarto Centen\xE1rio"
+    QUATIGUA: "Quatigu\xE1"
+    QUATRO BARRAS: Quatro Barras
+    QUATRO PONTES: Quatro Pontes
+    QUEDAS DO IGUACU: "Quedas do Igua\xE7u"
+    QUERENCIA DO NORTE: "Quer\xEAncia do Norte"
+    QUINTA DO SOL: Quinta do Sol
+    QUITANDINHA: Quitandinha
+    RAMILANDIA: "Ramil\xE2ndia"
+    RANCHO ALEGRE: Rancho Alegre
+    RANCHO ALEGRE D'OESTE: Rancho Alegre D'Oeste
+    RANCHO ALEGRE D''OESTE: Rancho Alegre D'Oeste
+    REALEZA: Realeza
+    REBOUCAS: "Rebou\xE7as"
+    RENASCENCA: "Renascen\xE7a"
+    RESERVA: Reserva
+    RESERVA DO IGUACU: "Reserva do Igua\xE7u"
+    RIBEIRAO CLARO: "Ribeir\xE3o Claro"
+    RIBEIRAO DO PINHAL: "Ribeir\xE3o do Pinhal"
+    RIO AZUL: Rio Azul
+    RIO BOM: Rio Bom
+    RIO BONITO DO IGUACU: "Rio Bonito do Igua\xE7u"
+    RIO BRANCO DO IVAI: "Rio Branco do Iva\xED"
+    RIO BRANCO DO SUL: Rio Branco do Sul
+    RIO NEGRO: Rio Negro
+    ROLANDIA: "Rol\xE2ndia"
+    RONCADOR: Roncador
+    RONDON: Rondon
+    ROSARIO DO IVAI: "Ros\xE1rio do Iva\xED"
+    SABAUDIA: "Sab\xE1udia"
+    SALGADO FILHO: Salgado Filho
+    SALTO DO ITARARE: "Salto do Itarar\xE9"
+    SALTO DO LONTRA: Salto do Lontra
+    SANTA AMELIA: "Santa Am\xE9lia"
+    SANTA CECILIA DO PAVAO: "Santa Cec\xEDlia do Pav\xE3o"
+    SANTA CRUZ DE MONTE CASTELO: Santa Cruz de Monte Castelo
+    SANTA CRUZ MONTE CASTELO: Santa Cruz de Monte Castelo
+    SANTA FE: "Santa F\xE9"
+    SANTA HELENA: Santa Helena
+    SANTA INES: "Santa In\xEAs"
+    SANTA ISABEL DO IVAI: "Santa Isabel do Iva\xED"
+    SANTA IZABEL DO OESTE: Santa Izabel do Oeste
+    SANTA LUCIA: "Santa L\xFAcia"
+    SANTA MARIA DO OESTE: Santa Maria do Oeste
+    SANTA MARIANA: Santa Mariana
+    SANTA MONICA: "Santa M\xF4nica"
+    SANTA TEREZA DO OESTE: Santa Tereza do Oeste
+    SANTA TEREZINHA DE ITAIPU: Santa Terezinha de Itaipu
+    SANTANA DO ITARARE: "Santana do Itarar\xE9"
+    SANTO ANTONIO DA PLATINA: "Santo Ant\xF4nio da Platina"
+    SANTO ANTONIO DO CAIUA: "Santo Ant\xF4nio do Caiu\xE1"
+    SANTO ANTONIO DO PARAISO: "Santo Ant\xF4nio do Para\xEDso"
+    SANTO ANTONIO DO SUDOESTE: "Santo Ant\xF4nio do Sudoeste"
+    SANTO INACIO: "Santo In\xE1cio"
+    SAO CARLOS DO IVAI: "S\xE3o Carlos do Iva\xED"
+    SAO JERONIMO DA SERRA: "S\xE3o Jer\xF4nimo da Serra"
+    SAO JOAO: "S\xE3o Jo\xE3o"
+    SAO JOAO DO CAIUA: "S\xE3o Jo\xE3o do Caiu\xE1"
+    SAO JOAO DO IVAI: "S\xE3o Jo\xE3o do Iva\xED"
+    SAO JOAO DO TRIUNFO: "S\xE3o Jo\xE3o do Triunfo"
+    SAO JORGE D'OESTE: "S\xE3o Jorge d'Oeste"
+    SAO JORGE DO IVAI: "S\xE3o Jorge do Iva\xED"
+    SAO JORGE DO PATROCINIO: "S\xE3o Jorge do Patroc\xEDnio"
+    SAO JOSE DA BOA VISTA: "S\xE3o Jos\xE9 da Boa Vista"
+    SAO JOSE DAS PALMEIRAS: "S\xE3o Jos\xE9 das Palmeiras"
+    SAO JOSE DOS PINHAIS: "S\xE3o Jos\xE9 dos Pinhais"
+    SAO MANOEL DO PARANA: "S\xE3o Manoel do Paran\xE1"
+    SAO MATEUS DO SUL: "S\xE3o Mateus do Sul"
+    SAO MIGUEL DO IGUACU: "S\xE3o Miguel do Igua\xE7u"
+    SAO PEDRO DO IGUACU: "S\xE3o Pedro do Igua\xE7u"
+    SAO PEDRO DO IVAI: "S\xE3o Pedro do Iva\xED"
+    SAO PEDRO DO PARANA: "S\xE3o Pedro do Paran\xE1"
+    SAO SEBASTIAO DA AMOREIRA: "S\xE3o Sebasti\xE3o da Amoreira"
+    SAO TOME: "S\xE3o Tom\xE9"
+    SAPOPEMA: Sapopema
+    SARANDI: Sarandi
+    SAUDADE DO IGUACU: "Saudade do Igua\xE7u"
+    SENGES: "Seng\xE9s"
+    SERRANOPOLIS DO IGUACU: "Serran\xF3polis do Igua\xE7u"
+    SERTANEJA: Sertaneja
+    SERTANOPOLIS: "Sertan\xF3polis"
+    SIQUEIRA CAMPOS: Siqueira Campos
+    SULINA: Sulina
+    TAMARANA: Tamarana
+    TAMBOARA: Tamboara
+    TAPEJARA: Tapejara
+    TAPIRA: Tapira
+    TEIXEIRA SOARES: Teixeira Soares
+    TELEMACO BORBA: "Tel\xEAmaco Borba"
+    TERRA BOA: Terra Boa
+    TERRA RICA: Terra Rica
+    TERRA ROXA: Terra Roxa
+    TIBAGI: Tibagi
+    TIJUCAS DO SUL: Tijucas do Sul
+    TOLEDO: Toledo
+    TOMAZINA: Tomazina
+    TOTAL NO ESTADO: TOTAL NO ESTADO
+    TRES BARRAS DO PARANA: "Tr\xEAs Barras do Paran\xE1"
+    "TRES BARRAS DO PARAN\xB5": "Tr\xEAs Barras do Paran\xE1"
+    "TRES BARRAS DO PARAN\xE6": "Tr\xEAs Barras do Paran\xE1"
+    TUNAS DO PARANA: "Tunas do Paran\xE1"
+    TUNEIRAS DO OESTE: Tuneiras do Oeste
+    TUPASSI: "Tup\xE3ssi"
+    TURVO: Turvo
+    UBIRATA: "Ubirat\xE3"
+    UMUARAMA: Umuarama
+    UNIAO DA VITORIA: "Uni\xE3o da Vit\xF3ria"
+    UNIFLOR: Uniflor
+    URAI: "Ura\xED"
+    VENTANIA: Ventania
+    VERA CRUZ DO OESTE: Vera Cruz do Oeste
+    VERE: "Ver\xEA"
+    VIRMOND: Virmond
+    VITORINO: Vitorino
+    WENCESLAU BRAZ: Wenceslau Braz
+    XAMBRE: "Xambr\xEA"
+RJ:
+  model: RJ_modelo.xlsx
+  total_regex:
+    confirmados: casos confirmados
+    mortes: óbitos por Coronavírus
+  typos:
+    "Arma\xE7\xE3o de B\xFAzios": "Arma\xE7\xE3o dos B\xFAzios"
+    Bom Jesus de Itabapoana: Bom Jesus do Itabapoana
+    Cachoeira de Macacu: Cachoeiras de Macacu
+    Cachoeira do Macacu: Cachoeiras de Macacu
+    São Fidelis: São Fidélis
+    Parati: Paratí
+    
+  p_city_deaths:
+    init: vítimas de Covid
+    final: Para mais informações
+  importados: [Município em investigação, Outro estado, Outros estados]

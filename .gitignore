@@ -1,0 +1,14 @@
+# Files
+*.csv
+*.xlsx
+*.ipynb
+!RJ_modelo.xlsx
+!PR_modelo.xlsx
+
+# Cache
+.ipynb_checkpoints/
+__pycache__/
+.DS_Store
+
+# Useless
+rename.py

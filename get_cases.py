@@ -43,16 +43,19 @@ def _create_city_dic(numbers, config, city_names):
     dic = dict()
 
     for i in numbers:
-        if "casos confirmados" in i.text:
+        if type(i) == bs4.element.NavigableString:
+            i = i.string
+
+        if (
+            "casos confirmados" in i
+            or "vítimas de Covid-19" in i
+            or type(i) == bs4.element.Tag
+        ):
             pass
-        elif "vítimas de Covid-19" in i.text:
-            pass
-        elif type(i.text) == bs4.element.Tag:
-            pass
-        elif i.text.strip() == "":
+        elif i.strip() == "":
             pass
         else:
-            dic.update(_text_to_dic_element(i.text))
+            dic.update(_text_to_dic_element(i.string))
 
     # Conserta typos
     for key in dic.keys():
@@ -72,26 +75,34 @@ def _load_content(date, config, city_names):
 
     # Find date url
     url = "https://coronavirus.rj.gov.br/boletins/"
+    soup = (
+        BeautifulSoup(urlopen(url), "html.parser")
+        .find("div", {"class": "entry-content"})
+        .select(".elementor-post__read-more")
+    )
 
-    soup = BeautifulSoup(urlopen(url), "html.parser")
-    url_boletim = soup.find("div", {"class": "entry-content"}).select(
-        ".elementor-post__read-more"
-    )[0]["href"]
+    boletim = None
+    for page in soup:
+        try:
+            if (
+                re.search(r"(?:boletim-coronavirus-)(\d+.\d+)", page["href"])[1].replace(
+                    "-", "_"
+                )
+                == date
+            ):
+                soup = BeautifulSoup(urlopen(page["href"]), "html.parser")
+                logger.info("URL Boletim: {display}", display=page["href"])
+                boletim = soup.find("div", {"class": "entry-content"})
+                break
+        except:
+            pass
 
-    if (
-        re.search("(?:boletim-coronavirus-)(\d+.\d+)", url_boletim)[1].replace("-", "_")
-        != date
-    ):
+    if not boletim:
         logger.warning(
             "Boletim ainda não atualizado! Último boletim: {display}",
-            display=url_boletim,
+            display=soup[0]["href"],
         )
         return
-
-    else:
-        soup = BeautifulSoup(urlopen(url_boletim), "html.parser")
-        logger.info("URL Boletim: {display}", display=url_boletim)
-        boletim = soup.find("div", {"class": "entry-content"})
 
     # Get html content
     if len(boletim.findAll("p")) > 10:
@@ -184,6 +195,9 @@ def _test_microdata_url(date, config, uf="PR"):
 
     # Procura boletim na página
     url_list = [
+        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/informe_epidemiologico_{}_2020_geral_atualizado.csv".format(
+            date[3:], date
+        ),
         "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOLOGICO_{}_2020%20.csv".format(
             date[3:], date
         ),
@@ -193,9 +207,9 @@ def _test_microdata_url(date, config, uf="PR"):
         "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOLOGICO_{}_2020_GERAL.csv".format(
             date[3:], date
         ),
-        # "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/arquivo_csv_0.csv".format(
-        #     date[3:]
-        # ), 26/07 -> não atualizado!
+        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/arquivo_csv_0.csv".format(
+            date[3:]
+        ),  # 26/07 -> não atualizado!
     ]
 
     replace = {

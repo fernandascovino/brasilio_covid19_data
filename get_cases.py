@@ -85,9 +85,9 @@ def _load_content(date, config, city_names):
     for page in soup:
         try:
             if (
-                re.search(r"(?:boletim-coronavirus-)(\d+.\d+)", page["href"])[1].replace(
-                    "-", "_"
-                )
+                re.search(r"(?:boletim-coronavirus-)(\d+.\d+)", page["href"])[
+                    1
+                ].replace("-", "_")
                 == date
             ):
                 soup = BeautifulSoup(urlopen(page["href"]), "html.parser")
@@ -195,21 +195,25 @@ def _test_microdata_url(date, config, uf="PR"):
 
     # Procura boletim na página
     url_list = [
-        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/informe_epidemiologico_{}_2020_geral_atualizado.csv".format(
-            date[3:], date
+        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/informe_epidemiologico_geral_{}.2020.csv".format(
+            date[3:], date.replace("_", ".")
         ),
-        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOLOGICO_{}_2020%20.csv".format(
-            date[3:], date
-        ),
-        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/informe_epidemiologico_{}_2020_geral.csv".format(
-            date[3:], date
-        ),
-        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOLOGICO_{}_2020_GERAL.csv".format(
-            date[3:], date
-        ),
-        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/arquivo_csv_0.csv".format(
-            date[3:]
-        ),  # 26/07 -> não atualizado!
+        # "raw/INFORME_EPIDEMIOLOGICO_03_08_2020_GERAL.csv",  # 03/08 -> arquivo baixado
+        # "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/informe_epidemiologico_{}_2020_geral_atualizado.csv".format(
+        #     date[3:], date
+        # ),
+        # "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOLOGICO_{}_2020%20.csv".format(
+        #     date[3:], date
+        # ),
+        # "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/informe_epidemiologico_{}_2020_geral.csv".format(
+        #     date[3:], date
+        # ),
+        # "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOLOGICO_{}_2020_GERAL.csv".format(
+        #     date[3:], date
+        # ),
+        # "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/arquivo_csv_0.csv".format(
+        #     date[3:]
+        # ),  # 26/07 -> não atualizado!
     ]
 
     replace = {

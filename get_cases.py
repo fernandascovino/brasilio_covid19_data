@@ -110,7 +110,7 @@ def _load_content(date, config, city_names):
             i
             for i, p in enumerate(boletim.find_all("p"))
             if re.search(
-                "\d+(.|)\d+(?=\s+{})".format(config["p_city_deaths"]["init"]), p.text
+                r"\d+(.|)\d+(?=\s+{})".format(config["p_city_deaths"]["init"]), p.text
             )
         ][0]
 
@@ -195,25 +195,31 @@ def _test_microdata_url(date, config, uf="PR"):
 
     # Procura boletim na página
     url_list = [
+        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/informe_epidemiologico_{}_2020_geral_0.csv".format(
+            date[3:], date
+        ),
+        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOL%C3%93GICO_{}_2020_GERAL.csv".format(
+            date[3:], date
+        ),
         "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/informe_epidemiologico_geral_{}.2020.csv".format(
             date[3:], date.replace("_", ".")
         ),
+        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/informe_epidemiologico_{}_2020_geral_atualizado.csv".format(
+            date[3:], date
+        ),
+        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOLOGICO_{}_2020%20.csv".format(
+            date[3:], date
+        ),
+        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/informe_epidemiologico_{}_2020_geral.csv".format(
+            date[3:], date
+        ),
+        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOLOGICO_{}_2020_GERAL.csv".format(
+            date[3:], date
+        ),
         # "raw/INFORME_EPIDEMIOLOGICO_03_08_2020_GERAL.csv",  # 03/08 -> arquivo baixado
-        # "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/informe_epidemiologico_{}_2020_geral_atualizado.csv".format(
-        #     date[3:], date
-        # ),
-        # "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOLOGICO_{}_2020%20.csv".format(
-        #     date[3:], date
-        # ),
-        # "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/informe_epidemiologico_{}_2020_geral.csv".format(
-        #     date[3:], date
-        # ),
-        # "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOLOGICO_{}_2020_GERAL.csv".format(
-        #     date[3:], date
-        # ),
         # "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/arquivo_csv_0.csv".format(
         #     date[3:]
-        # ),  # 26/07 -> não atualizado!
+        # ),  # 26/07 -> mortes atualizadas posteriormente
     ]
 
     replace = {
@@ -285,6 +291,7 @@ def get_pr_cases_from_micro_data(date, config, uf="PR"):
     ].count()
     casos_pr.loc["TOTAL NO ESTADO"] = casos_pr.sum()
 
+    logger.info("Checando total: \n{display}", display=casos_pr.loc["TOTAL NO ESTADO"])
     return casos_pr
 
 

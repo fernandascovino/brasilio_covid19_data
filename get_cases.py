@@ -43,19 +43,20 @@ def _create_city_dic(numbers, config, city_names):
     dic = dict()
 
     for i in numbers:
+
         if type(i) == bs4.element.NavigableString:
             i = i.string
 
-        if (
-            "casos confirmados" in i
-            or "vítimas de Covid-19" in i
-            or type(i) == bs4.element.Tag
-        ):
+        # ex: <p>São Gonçalo – 9.295</p>
+        if type(i) == bs4.element.Tag:
+            i = i.text
+
+        if "casos confirmados" in i or "vítimas de Covid-19" in i:
             pass
         elif i.strip() == "":
             pass
         else:
-            dic.update(_text_to_dic_element(i.string))
+            dic.update(_text_to_dic_element(i))
 
     # Conserta typos
     for key in dic.keys():
@@ -331,7 +332,6 @@ def _test_urls(date, config, uf="PR"):
                 )
                 data.columns = data.columns.str.strip()
                 data = data.rename(config[uf]["rename"], axis=1)
-                print(data)
 
             if len(data) > 0:
                 logger.info("URL Boletim: {display}", display=url)
@@ -350,10 +350,6 @@ def get_pr_cases(date, config, uf="PR"):
     # data = _extract_pdf_data(date, config)
 
     if len(data) == 0:
-        data.columns = data.columns.str.strip()
-        # print(data.columns)
-        # data = data.rename(config[uf]["rename"], axis=1)[config[uf]["keep"]]
-        # else:
         return
 
     # TEST: Checa se as colunas foram identificadas

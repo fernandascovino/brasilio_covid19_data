@@ -196,6 +196,12 @@ def _test_microdata_url(date, config, uf="PR"):
 
     # Procura boletim na página
     url_list = [
+        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOLOGICO_{}_GERAL.csv".format(
+            date[3:], date
+        ),
+        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOLOGICO_{}_GERAL.csv".format(
+            date[3:], date.replace("_", ".")
+        ),
         "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/informe_epidemiologico_{}_2020_geral_0.csv".format(
             date[3:], date
         ),
@@ -292,7 +298,14 @@ def get_pr_cases_from_micro_data(date, config, uf="PR"):
     ].count()
     casos_pr.loc["TOTAL NO ESTADO"] = casos_pr.sum()
 
-    logger.info("Checando total: \n{display}", display=casos_pr.loc["TOTAL NO ESTADO"])
+    logger.info(
+        "Total PR: \n{display}",
+        display=casos_pr.loc["TOTAL NO ESTADO"]
+        - casos_pr.loc["Importados/Indefinidos"],
+    )
+    logger.info(
+        "Fora do PR: \n{display}", display=casos_pr.loc["Importados/Indefinidos"]
+    )
     return casos_pr
 
 

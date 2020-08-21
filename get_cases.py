@@ -196,6 +196,12 @@ def _test_microdata_url(date, config, uf="PR"):
 
     # Procura boletim na página
     url_list = [
+        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMILOGICO_{}_CASOS_OBITOS_MUNICIPIOS.csv".format(
+            date[3:], date
+        ),
+        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMILOGICO_{}_GERAL.csv".format(
+            date[3:], date
+        ),
         "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOLOGICO_{}_GERAL.csv".format(
             date[3:], date
         ),

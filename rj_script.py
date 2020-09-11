@@ -14,6 +14,45 @@ import re
 from loguru import logger
 
 
+def _text_to_dic_element(s):
+    idx = [p for p, i in enumerate(s) if i.isdigit()][0]
+    return {re.sub(r"[^\w\s]", "", s[:idx]).strip(): int(s[idx:].replace(".", ""))}
+
+
+def _create_city_dic(numbers, config, city_names):
+
+    dic = dict()
+
+    for i in numbers:
+
+        if type(i) == bs4.element.NavigableString:
+            i = i.string
+
+        # ex: <p>São Gonçalo – 9.295</p>
+        if type(i) == bs4.element.Tag:
+            i = i.text
+
+        if "casos confirmados" in i or "vítimas de Covid-19" in i:
+            pass
+        elif i.strip() == "":
+            pass
+        else:
+            dic.update(_text_to_dic_element(i))
+
+    # Conserta typos
+    for key in dic.keys():
+        dic[get_close_matches(key, city_names, 1)[0]] = dic.pop(key)
+
+    # Junta total de importados
+    importados = {k: dic[k] for k in dic.keys() if k in config["importados"]}
+    dic["Importados/Indefinidos"] = sum(importados.values())
+
+    for k in importados:
+        dic.pop(k)
+
+    return dic
+
+
 def _load_content(date, config, city_names):
 
     # Find date url

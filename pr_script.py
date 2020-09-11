@@ -40,90 +40,33 @@ def _fix_typos(data, config, uf):
     return data
 
 
-def _text_to_dic_element(s):
-    idx = [p for p, i in enumerate(s) if i.isdigit()][0]
-    return {re.sub(r"[^\w\s]", "", s[:idx]).strip(): int(s[idx:].replace(".", ""))}
-
-
-def _create_city_dic(numbers, config, city_names):
-
-    dic = dict()
-
-    for i in numbers:
-
-        if type(i) == bs4.element.NavigableString:
-            i = i.string
-
-        # ex: <p>São Gonçalo – 9.295</p>
-        if type(i) == bs4.element.Tag:
-            i = i.text
-
-        if "casos confirmados" in i or "vítimas de Covid-19" in i:
-            pass
-        elif i.strip() == "":
-            pass
-        else:
-            dic.update(_text_to_dic_element(i))
-
-    # Conserta typos
-    for key in dic.keys():
-        dic[get_close_matches(key, city_names, 1)[0]] = dic.pop(key)
-
-    # Junta total de importados
-    importados = {k: dic[k] for k in dic.keys() if k in config["importados"]}
-    dic["Importados/Indefinidos"] = sum(importados.values())
-
-    for k in importados:
-        dic.pop(k)
-
-    return dic
-
-
 # A PARTIR DE 24/07
 def _test_microdata_url(date, config, uf="PR"):
 
+    default_url = f"http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{date[3:]}/"
+
+    date_point = date.replace("_", ".")
     # Procura boletim na página
-    url_list = [
-        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/informe_epidemiologico_{}_geral.csv".format(
-            date[3:], date
-        ),
-        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMILOGICO_{}_CASOS_OBITOS_MUNICIPIOS.csv".format(
-            date[3:], date
-        ),
-        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMILOGICO_{}_GERAL.csv".format(
-            date[3:], date
-        ),
-        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOLOGICO_{}_GERAL.csv".format(
-            date[3:], date
-        ),
-        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOLOGICO_{}_GERAL.csv".format(
-            date[3:], date.replace("_", ".")
-        ),
-        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/informe_epidemiologico_{}_2020_geral_0.csv".format(
-            date[3:], date
-        ),
-        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOL%C3%93GICO_{}_2020_GERAL.csv".format(
-            date[3:], date
-        ),
-        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/informe_epidemiologico_geral_{}.2020.csv".format(
-            date[3:], date.replace("_", ".")
-        ),
-        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/informe_epidemiologico_{}_2020_geral_atualizado.csv".format(
-            date[3:], date
-        ),
-        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOLOGICO_{}_2020%20.csv".format(
-            date[3:], date
-        ),
-        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/informe_epidemiologico_{}_2020_geral.csv".format(
-            date[3:], date
-        ),
-        "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/INFORME_EPIDEMIOLOGICO_{}_2020_GERAL.csv".format(
-            date[3:], date
-        ),
-        # "raw/INFORME_EPIDEMIOLOGICO_03_08_2020_GERAL.csv",  # 03/08 -> arquivo baixado
-        # "http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{}/arquivo_csv_0.csv".format(
-        #     date[3:]
-        # ),  # 26/07 -> mortes atualizadas posteriormente
+    files_urls = [
+        default_url + i
+        for i in (
+            f"INFORME_EPIDEMIOLOGICO_{date}_2002_GERAL.csv",  # typo em 09/09/2020,
+            f"informe_epidemiologico_{date[3:]}_geral.csv",
+            f"informe_epidemiologico_{date}_2020_geral.csv",
+            f"INFORME_EPIDEMILOGICO_{date}_CASOS_OBITOS_MUNICIPIOS.csv",
+            f"INFORME_EPIDEMIOLOGICO_{date}_GERAL.csv",
+            f"INFORME_EPIDEMIOLOGICO_{date_point}_GERAL.csv",
+            f"INFORME_EPIDEMIOLOGICO_{date}_2020_GERAL.csv",
+            f"INFORME_EPIDEMIOL%C3%93GICO_{date}_2020_GERAL.csv",
+            f"informe_epidemiologico_geral_{date_point}.2020.csv",
+            f"informe_epidemiologico_{date}_2020_geral_atualizado.csv",
+            # f"INFORME_EPIDEMIOLOGICO_{date}_2020%20.csv" # typo
+            # f"INFORME_EPIDEMILOGICO_{date}_GERAL.csv", # typo
+            # f"informe_epidemiologico_{date}_2020_geral_0.csv", # rascunho?
+            # "raw/INFORME_EPIDEMIOLOGICO_03_08_2020_GERAL.csv",  # 03/08 -> arquivo baixado
+            # f"arquivo_csv_0.csv" # 26/07 -> mortes atualizadas
+            # posteriormente
+        )
     ]
 
     replace = {
@@ -135,7 +78,7 @@ def _test_microdata_url(date, config, uf="PR"):
         "DATA_OBITO": "mortes",
     }
 
-    for url in url_list:
+    for url in files_urls:
         try:
             data = pd.read_csv(url, sep=";", skiprows=0, encoding="latin-1")
 

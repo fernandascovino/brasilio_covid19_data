@@ -41,7 +41,11 @@ def _create_city_dic(numbers, config, city_names):
 
     # Conserta typos
     for key in dic.keys():
-        dic[get_close_matches(key, city_names, 1)[0]] = dic.pop(key)
+        if len(get_close_matches(key, city_names, 1)) == 0:
+            print("aqui!")
+            logger.info("Typos NÃO identificados: {display}", display=key)
+        else:
+            dic[get_close_matches(key, city_names, 1)[0]] = dic.pop(key)
 
     # Junta total de importados
     importados = {k: dic[k] for k in dic.keys() if k in config["importados"]}
@@ -137,11 +141,11 @@ def _load_content(date, config, city_names):
         # TODO: have this automaticaly find the right p's
         content = {
             "total": str(soup.findAll("p")[0]),
-            "confirmados": soup.findAll("p")[2],
-            "mortes": soup.findAll("p")[4],
+            "confirmados": soup.findAll("p")[1],
+            "mortes": soup.findAll("p")[3],
         }
 
-    # print(content)
+        print(content)
 
     # Treat data
     data = {"confirmados": dict(), "mortes": dict()}
@@ -173,15 +177,14 @@ def main(date, config, uf="RJ"):
     if len(cases) == 0:
         return
 
-    # Verifica erros
-    errors = [i for i in list(cases.index) if i not in list(df.index)]
-
-    if len(errors) > 0:
-        rename = {
-            city: get_close_matches(city, df.index.unique(), 1)[0] for city in errors
-        }
-        logger.warning("Typos não registrados: {display}", display=rename)
-        cases = cases.rename(index=rename).reset_index().groupby("index").sum()
+    # # Verifica erros
+    # errors = [i for i in list(cases.index) if i not in list(df.index)]
+    # if len(errors) > 0:
+    #     rename = {
+    #         city: get_close_matches(city, df.index.unique(), 1)[0] for city in errors
+    #     }
+    #     logger.warning("Typos não registrados: {display}", display=rename)
+    #     cases = cases.rename(index=rename).reset_index().groupby("index").sum()
 
     df["confirmados"] = cases["confirmados"]
     df["mortes"] = cases.apply(
@@ -190,6 +193,16 @@ def main(date, config, uf="RJ"):
         else row["mortes"],
         axis=1,
     )
+
+    # Checa total
+    cidades = df[df.index != "TOTAL NO ESTADO"]
+    if any((cidades.sum() / 2).values != df.loc["TOTAL NO ESTADO"].values):
+        logger.info(
+            "Soma das cidades diverge do total do estado - atualizando pela soma:\n==> Soma:\n{display1}\n==> Total pela Secretaria:\n{display2}",
+            display1=cidades.sum(),
+            display2=df.loc["TOTAL NO ESTADO"],
+        )
+        df.loc["TOTAL NO ESTADO", :] = cidades.sum()
 
     logger.info("Checando total: {display}", display=list(df.sum() / 2))
 

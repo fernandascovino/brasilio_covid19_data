@@ -41,6 +41,7 @@ def _fix_typos(data, config, uf):
 
 
 # A PARTIR DE 24/07
+# TODO: melhorar essa busca
 def _test_microdata_url(date, config, uf="PR"):
 
     default_url = f"http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{date[3:]}/"
@@ -51,7 +52,7 @@ def _test_microdata_url(date, config, uf="PR"):
         default_url + i
         for i in (
             f"INFORME_EPIDEMIOLOGICO_{date}_2002_GERAL.csv",  # typo em 09/09/2020,
-            f"informe_epidemiologico_{date[3:]}_geral.csv",
+            f"informe_epidemiologico_{date}_geral.csv",
             f"informe_epidemiologico_{date}_2020_geral.csv",
             f"INFORME_EPIDEMILOGICO_{date}_CASOS_OBITOS_MUNICIPIOS.csv",
             f"INFORME_EPIDEMIOLOGICO_{date}_GERAL.csv",
@@ -60,6 +61,7 @@ def _test_microdata_url(date, config, uf="PR"):
             f"INFORME_EPIDEMIOL%C3%93GICO_{date}_2020_GERAL.csv",
             f"informe_epidemiologico_geral_{date_point}.2020.csv",
             f"informe_epidemiologico_{date}_2020_geral_atualizado.csv",
+            # f"INFORME_EPIDEMIOLOGICO_15_08_2020_GERAL.csv",  # 15/09: link com erro no mes
             # f"INFORME_EPIDEMIOLOGICO_{date}_2020%20.csv" # typo
             # f"INFORME_EPIDEMILOGICO_{date}_GERAL.csv", # typo
             # f"informe_epidemiologico_{date}_2020_geral_0.csv", # rascunho?

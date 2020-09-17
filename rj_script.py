@@ -41,6 +41,10 @@ def _create_city_dic(numbers, config, city_names):
 
     # Conserta typos
     for key in dic.keys():
+        # TODO: o que acontece aqui?
+        # if key == "VarreSai": -> não funciona!!!
+        #     print("WTF??")
+        #     dic["Varre-Sai"] = dic.pop(key)
         if len(get_close_matches(key, city_names, 1)) == 0:
             print("aqui!")
             logger.info("Typos NÃO identificados: {display}", display=key)
@@ -53,6 +57,9 @@ def _create_city_dic(numbers, config, city_names):
 
     for k in importados:
         dic.pop(k)
+
+    if "VarreSai" in dic.keys():
+        dic["Varre-Sai"] = dic.pop("VarreSai")
 
     return dic
 
@@ -108,7 +115,7 @@ def _load_content(date, config, city_names):
         ][0]
 
         content = {
-            "total": cleaned_div[0].text.replace(u"\xa0", u" "),
+            "total": cleaned_div[0].text.replace("\xa0", " "),
             "confirmados": cleaned_div[2:init_mortes],
             "mortes": cleaned_div[init_mortes + 1 : final_mortes],
         }
@@ -145,7 +152,7 @@ def _load_content(date, config, city_names):
             "mortes": soup.findAll("p")[3],
         }
 
-        print(content)
+        # print(content)
 
     # Treat data
     data = {"confirmados": dict(), "mortes": dict()}
@@ -196,7 +203,7 @@ def main(date, config, uf="RJ"):
 
     # Checa total
     cidades = df[df.index != "TOTAL NO ESTADO"]
-    if any((cidades.sum() / 2).values != df.loc["TOTAL NO ESTADO"].values):
+    if any(cidades.sum().values != df.loc["TOTAL NO ESTADO"].values):
         logger.info(
             "Soma das cidades diverge do total do estado - atualizando pela soma:\n==> Soma:\n{display1}\n==> Total pela Secretaria:\n{display2}",
             display1=cidades.sum(),

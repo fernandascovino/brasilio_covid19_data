@@ -32,7 +32,7 @@ def _fix_typos(data, config, uf):
                 print(city)
                 not_matched += [city]
 
-        logger.warning("Typos identificados: {display}", display=rename)
+        # logger.warning("Typos identificados: {display}", display=rename)
         logger.warning("Typos NÃO identificados: {display}", display=not_matched)
 
         return data.rename(index=rename)

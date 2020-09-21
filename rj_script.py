@@ -90,6 +90,13 @@ def _load_content(date, config, city_names):
         except:
             pass
 
+    # 18/09: não indexada na pagina de boletins!
+    if date == "18_09":
+        url = "https://coronavirus.rj.gov.br/boletim-coronavirus-18-09-17-575-obitos-e-249-798-casos-confirmados-no-rj"
+        soup = BeautifulSoup(urlopen(url), "html.parser")
+        boletim = soup.find("div", {"class": "elementor-widget-container"})
+        logger.info("URL Boletim: {display}", display=url)
+
     if not boletim:
         logger.warning(
             "Boletim ainda não atualizado! Último boletim: {display}",
@@ -121,7 +128,7 @@ def _load_content(date, config, city_names):
         }
 
     # Nova estrutura: entry-content + p direto no body
-    elif len(boletim.findAll("p")) == 0:
+    elif len(boletim.findAll("p")) == 0 and date != "18_09":
         init_mortes = [
             i
             for i, p in enumerate(soup.find_all("p"))
@@ -141,8 +148,6 @@ def _load_content(date, config, city_names):
             "confirmados": soup.findAll("p")[2:init_mortes],
             "mortes": soup.findAll("p")[init_mortes + 1 : final_mortes],
         }
-
-        # print(content)
 
     else:
         # TODO: have this automaticaly find the right p's
@@ -205,15 +210,15 @@ def main(date, config, uf="RJ"):
     cidades = df[df.index != "TOTAL NO ESTADO"]
     if any(cidades.sum().values != df.loc["TOTAL NO ESTADO"].values):
         logger.info(
-            "Soma das cidades diverge do total do estado - atualizando pela soma:\n==> Soma:\n{display1}\n==> Total pela Secretaria:\n{display2}",
+            "Soma das cidades diverge do total do estado: \n==> Soma:\n{display1}\n==> Total pela Secretaria:\n{display2}",
             display1=cidades.sum(),
             display2=df.loc["TOTAL NO ESTADO"],
         )
-        df.loc["TOTAL NO ESTADO", :] = cidades.sum()
+        # df.loc["TOTAL NO ESTADO", :] = cidades.sum()
 
     logger.info("Checando total: {display}", display=list(df.sum() / 2))
 
-    return df
+    return df.fillna(0)
 
 
 if __name__ == "__main__":

@@ -46,29 +46,25 @@ def _test_microdata_url(date, config, uf="PR"):
 
     default_url = f"http://www.saude.pr.gov.br/sites/default/arquivos_restritos/files/documento/2020-{date[3:]}/"
 
+    # Lista de nomes de arquivos
     date_point = date.replace("_", ".")
-    # Procura boletim na página
-    files_urls = [
-        default_url + i
-        for i in (
-            f"INFORME_EPIDEMIOLOGICO_{date}_2002_GERAL.csv",  # typo em 09/09/2020,
-            f"informe_epidemiologico_{date}_geral.csv",
-            f"informe_epidemiologico_{date}_2020_geral.csv",
-            f"INFORME_EPIDEMILOGICO_{date}_CASOS_OBITOS_MUNICIPIOS.csv",
-            f"INFORME_EPIDEMIOLOGICO_{date}_GERAL.csv",
-            f"INFORME_EPIDEMIOLOGICO_{date_point}_GERAL.csv",
-            f"INFORME_EPIDEMIOLOGICO_{date}_2020_GERAL.csv",
-            f"INFORME_EPIDEMIOL%C3%93GICO_{date}_2020_GERAL.csv",
-            f"informe_epidemiologico_geral_{date_point}.2020.csv",
-            f"informe_epidemiologico_{date}_2020_geral_atualizado.csv",
-            # f"INFORME_EPIDEMIOLOGICO_15_08_2020_GERAL.csv",  # 15/09: link com erro no mes
-            # f"INFORME_EPIDEMIOLOGICO_{date}_2020%20.csv" # typo
-            # f"INFORME_EPIDEMILOGICO_{date}_GERAL.csv", # typo
-            # f"informe_epidemiologico_{date}_2020_geral_0.csv", # rascunho?
-            # "raw/INFORME_EPIDEMIOLOGICO_03_08_2020_GERAL.csv",  # 03/08 -> arquivo baixado
-            # f"arquivo_csv_0.csv" # 26/07 -> mortes atualizadas
-            # posteriormente
-        )
+    filenames = [
+        f"INFORME_EPIDEMIOLOGICO_{date}_2002_GERAL.csv",  # typo em 09/09/2020,
+        f"informe_epidemiologico_{date}_geral.csv",
+        f"informe_epidemiologico_{date}_2020_geral.csv",
+        f"INFORME_EPIDEMILOGICO_{date}_CASOS_OBITOS_MUNICIPIOS.csv",
+        f"INFORME_EPIDEMIOLOGICO_{date}_GERAL.csv",
+        f"INFORME_EPIDEMIOLOGICO_{date_point}_GERAL.csv",
+        f"INFORME_EPIDEMIOLOGICO_{date}_2020_GERAL.csv",
+        f"INFORME_EPIDEMIOL%C3%93GICO_{date}_2020_GERAL.csv",
+        f"informe_epidemiologico_geral_{date_point}.2020.csv",
+        f"informe_epidemiologico_{date}_2020_geral_atualizado.csv",
+        # f"INFORME_EPIDEMIOLOGICO_15_08_2020_GERAL.csv",  # 15/09: link com erro no mes
+        # f"INFORME_EPIDEMIOLOGICO_{date}_2020%20.csv" # typo
+        # f"INFORME_EPIDEMILOGICO_{date}_GERAL.csv", # typo
+        # f"informe_epidemiologico_{date}_2020_geral_0.csv", # rascunho?
+        # "raw/INFORME_EPIDEMIOLOGICO_03_08_2020_GERAL.csv",  # 03/08 -> arquivo baixado
+        # f"arquivo_csv_0.csv" # 26/07 -> mortes atualizadas posteriormente
     ]
 
     replace = {
@@ -80,7 +76,9 @@ def _test_microdata_url(date, config, uf="PR"):
         "DATA_OBITO": "mortes",
     }
 
-    for url in files_urls:
+    for filename in filenames:
+
+        url = default_url + filename
         try:
             data = pd.read_csv(url, sep=";", skiprows=0, encoding="latin-1")
 
@@ -94,15 +92,19 @@ def _test_microdata_url(date, config, uf="PR"):
             return data  # [config[uf]["keep"]]
 
         except Exception as e:
-            logger.error("{display} | {error}", display=url, error=e)
+            logger.error("{error} | {display}", display=filename, error=e)
             pass
 
+    logger.error("URL não encontrada!")
     return
 
 
 def main(date, config, uf="PR"):
 
     data = _test_microdata_url(date, config)
+    if not isinstance(data, pd.DataFrame):
+        return
+
     data["municipio"] = data["municipio"].str.upper()
 
     # conserta casos limites

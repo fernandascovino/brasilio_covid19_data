@@ -153,8 +153,8 @@ def _load_content(date, config, city_names):
         # TODO: have this automaticaly find the right p's
         content = {
             "total": str(soup.findAll("p")[0]),
-            "confirmados": soup.findAll("p")[2],
-            "mortes": soup.findAll("p")[4],
+            "confirmados": soup.findAll("p")[1],
+            "mortes": soup.findAll("p")[3],
         }
 
         # print(content)

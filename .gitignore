@@ -5,6 +5,9 @@
 !RJ_modelo.xlsx
 !PR_modelo.xlsx
 
+# MT Analysis
+!br_mt_microdados.ipynb
+
 # Cache
 .ipynb_checkpoints/
 __pycache__/

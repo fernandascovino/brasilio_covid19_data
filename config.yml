@@ -1,5 +1,5 @@
 PR:
-  model: PR_modelo.xlsx
+  model: models/PR_modelo.xlsx
   rename:
     MUNICIPIO: municipio
     CONFIRMADOS: confirmados
@@ -425,7 +425,7 @@ PR:
     WENCESLAU BRAZ: Wenceslau Braz
     XAMBRE: "Xambr\xEA"
 RJ:
-  model: RJ_modelo.xlsx
+  model: models/RJ_modelo.xlsx
   total_regex:
     confirmados: casos confirmados
     mortes: óbitos por Coronavírus

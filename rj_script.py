@@ -1,72 +1,32 @@
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
-import bs4
-
-import glob
-import os
-
 import numpy as np
 import pandas as pd
-
 from difflib import get_close_matches
 import re
-
 from loguru import logger
 
 
-def _text_to_dic_element(s):
-    idx = [p for p, i in enumerate(s) if i.isdigit()][0]
-    return {re.sub(r"[^\w\s]", "", s[:idx]).strip(): int(s[idx:].replace(".", ""))}
+def treat_city_name(name, list_names):
+    """
+    Busca nome mais proximo dado lista de nomes e substitui termos para Importados/Indefinidos.
+    """
+
+    if name in ["Município em investigação", "Outro estado", "Outros estados"]:
+        return "Importados/Indefinidos"
+
+    if name == "VarreSai":
+        return "Varre-Sai"
+
+    if name == "Page":
+        return "Magé"
+
+    return get_close_matches(name, list_names, cutoff=0.75)[0]
 
 
-def _create_city_dic(numbers, config, city_names):
+def main(day, month):
 
-    dic = dict()
-
-    for i in numbers:
-
-        if type(i) == bs4.element.NavigableString:
-            i = i.string
-
-        # ex: <p>São Gonçalo – 9.295</p>
-        if type(i) == bs4.element.Tag:
-            i = i.text
-
-        if "casos confirmados" in i or "vítimas de Covid-19" in i:
-            pass
-        elif i.strip() == "":
-            pass
-        else:
-            dic.update(_text_to_dic_element(i))
-
-    # Conserta typos
-    for key in dic.keys():
-        # TODO: o que acontece aqui?
-        # if key == "VarreSai": -> não funciona!!!
-        #     print("WTF??")
-        #     dic["Varre-Sai"] = dic.pop(key)
-        if len(get_close_matches(key, city_names, 1)) == 0:
-            print("aqui!")
-            logger.info("Typos NÃO identificados: {display}", display=key)
-        else:
-            dic[get_close_matches(key, city_names, 1)[0]] = dic.pop(key)
-
-    # Junta total de importados
-    importados = {k: dic[k] for k in dic.keys() if k in config["importados"]}
-    dic["Importados/Indefinidos"] = sum(importados.values())
-
-    for k in importados:
-        dic.pop(k)
-
-    if "VarreSai" in dic.keys():
-        dic["Varre-Sai"] = dic.pop("VarreSai")
-
-    return dic
-
-
-def _load_content(date, config, city_names):
-
-    # Find date url
+    # (1) Busca URL do boletim de hoje
     url = "https://coronavirus.rj.gov.br/boletins/"
     soup = (
         BeautifulSoup(urlopen(url), "html.parser")
@@ -74,139 +34,118 @@ def _load_content(date, config, city_names):
         .select(".elementor-post__read-more")
     )
 
-    boletim = None
-    for page in soup:
-        try:
-            if (
-                re.search(r"(?:boletim-coronavirus-)(\d+.\d+)", page["href"])[
-                    1
-                ].replace("-", "_")
-                == date
-            ):
-                soup = BeautifulSoup(urlopen(page["href"]), "html.parser")
-                logger.info("URL Boletim: {display}", display=page["href"])
-                boletim = soup.find("div", {"class": "entry-content"})
-                break
-        except:
-            pass
+    boletim = [
+        i
+        for i in soup
+        if "coronavirus" + "-" + str(day) + "-" + str(month) in i["href"]
+    ]
 
-    # 18/09: não indexada na pagina de boletins!
-    if date == "18_09":
-        url = "https://coronavirus.rj.gov.br/boletim-coronavirus-18-09-17-575-obitos-e-249-798-casos-confirmados-no-rj"
-        soup = BeautifulSoup(urlopen(url), "html.parser")
-        boletim = soup.find("div", {"class": "elementor-widget-container"})
-        logger.info("URL Boletim: {display}", display=url)
+    # URL errada dia 30/10
+    if day == "30" and month == "10":
+        boletim = [
+            {
+                "href": "https://coronavirus.rj.gov.br/boletim/boletim-coronavirus-31-10-20-600-obitos-e-309-977-casos-confirmados-no-rj/"
+            }
+        ]
 
-    if not boletim:
+    if len(boletim) == 0:
         logger.warning(
-            "Boletim ainda não atualizado! Último boletim: {display}",
+            "Boletim não indexado ou ainda não atualizado! Último boletim: {display}",
             display=soup[0]["href"],
         )
-        return
-
-    # Nova estrutura: div nested
-    if len(boletim.findAll("p")) > 10:
-        cleaned_div = [i for i in boletim.find_all("p") if len(i.find_all("p")) == 0]
-        init_mortes = [
-            i
-            for i, p in enumerate(cleaned_div)
-            if re.search(
-                r"\d+(.|)\d+(?=\s+{})".format(config["p_city_deaths"]["init"]), p.text,
-            )
-        ][0]
-
-        final_mortes = [
-            i
-            for i, p in enumerate(cleaned_div)
-            if re.search("{}".format(config["p_city_deaths"]["final"]), p.text)
-        ][0]
-
-        content = {
-            "total": cleaned_div[0].text.replace("\xa0", " "),
-            "confirmados": cleaned_div[2:init_mortes],
-            "mortes": cleaned_div[init_mortes + 1 : final_mortes],
-        }
-
-    # Nova estrutura: entry-content + p direto no body
-    elif len(boletim.findAll("p")) == 0 and date != "18_09":
-        init_mortes = [
-            i
-            for i, p in enumerate(soup.find_all("p"))
-            if re.search(
-                r"\d+(.|)\d+(?=\s+{})".format(config["p_city_deaths"]["init"]), p.text
-            )
-        ][0]
-
-        final_mortes = [
-            i
-            for i, p in enumerate(soup.find_all("p"))
-            if re.search("{}".format(config["p_city_deaths"]["final"]), p.text)
-        ][0]
-
-        content = {
-            "total": str(boletim.findAll("span")[0]),
-            "confirmados": soup.findAll("p")[2:init_mortes],
-            "mortes": soup.findAll("p")[init_mortes + 1 : final_mortes],
-        }
-
     else:
-        # TODO: have this automaticaly find the right p's
-        content = {
-            "total": str(soup.findAll("p")[0]),
-            "confirmados": soup.findAll("p")[1],
-            "mortes": soup.findAll("p")[3],
-        }
-
-        # print(content)
-
-    # Treat data
-    data = {"confirmados": dict(), "mortes": dict()}
-
-    for k in data.keys():
-
-        data[k] = _create_city_dic(content[k], config, city_names)
-
-        data[k]["TOTAL NO ESTADO"] = int(
-            re.search(
-                "\d+(.|)\d+(?=\s+{})".format(config["total_regex"][k]),
-                content["total"],
-                flags=re.IGNORECASE,
-            )
-            .group()
-            .replace(".", "")
+        logger.info("URL Boletim: {display}", display=boletim[0]["href"])
+        boletim = BeautifulSoup(urlopen(boletim[0]["href"]), features="lxml").find(
+            "div", {"class": "entry-content"}
         )
 
-    return data
+    # (2) Carrega e trata os dados
+    if len(boletim.findAll("p")) > 10:
 
+        # Cria tabela com nomes padrão das cidades
+        rj_model = pd.read_excel("models/RJ_modelo.xlsx", index_col=0)
+        df = pd.DataFrame(columns=["confirmados", "mortes"], index=rj_model.index)
 
-def main(date, config, uf="RJ"):
+        # Limpa div (pega somente p que possui texto, não recursivo)
+        cleaned_div = [i for i in boletim.find_all("p") if len(i.find_all("p")) == 0]
 
-    df = pd.read_excel(config[uf]["model"], index_col=0)
+        # Trata totais
+        total = {
+            "confirmados": "casos confirmados",
+            "mortes": "óbitos por Coronavírus",
+        }
 
-    # Coleta os casos e mortes do boletim
-    cases = pd.DataFrame(_load_content(date, config[uf], df.index.unique()))
+        for tipo in total.keys():
 
-    if len(cases) == 0:
-        return
+            df.loc["TOTAL NO ESTADO", tipo] = int(
+                re.search(
+                    "\d+(.|)\d+(?=\s+{})".format(total[tipo]),
+                    cleaned_div[0].text.replace("\xa0", " "),
+                    flags=re.IGNORECASE,
+                )
+                .group()
+                .replace(".", "")
+            )
 
-    # # Verifica erros
-    # errors = [i for i in list(cases.index) if i not in list(df.index)]
-    # if len(errors) > 0:
-    #     rename = {
-    #         city: get_close_matches(city, df.index.unique(), 1)[0] for city in errors
-    #     }
-    #     logger.warning("Typos não registrados: {display}", display=rename)
-    #     cases = cases.rename(index=rename).reset_index().groupby("index").sum()
+        # Trata confirmados e mortes das cidades
+        init_casos = [
+            i + 1
+            for i, e in enumerate(cleaned_div)
+            if "casos confirmados estão distribuídos" in e.text
+        ][0]
+        init_mortes = [
+            i + 1
+            for i, e in enumerate(cleaned_div)
+            if "vítimas de Covid-19 no estado" in e.text
+        ][0]
 
-    df["confirmados"] = cases["confirmados"]
-    df["mortes"] = cases.apply(
-        lambda row: 0
-        if not np.isnan(row["confirmados"]) and np.isnan(row["mortes"])
-        else row["mortes"],
-        axis=1,
+        content = {
+            "confirmados": cleaned_div[init_casos : init_mortes - 1],
+            "mortes": cleaned_div[init_mortes:-1],
+        }
+
+        for tipo in content.keys():
+            for i in content[tipo]:
+                try:
+                    separator = [sep for sep in ["– ", "- "] if sep in i.text][0]
+
+                    city_name = treat_city_name(
+                        i.text.split(separator)[0].strip(), df.index
+                    )
+                    value = (
+                        i.text.split(separator)[1]
+                        .replace("–", "")
+                        .strip()
+                        .replace(".", "")
+                    )
+
+                    df.loc[city_name, tipo] = value
+
+                except Exception as e:
+                    city_name = i.text.split("–")[0].strip()
+
+                    logger.warning(
+                        "Cidade não encontrada: {display}", display=city_name,
+                    )
+
+                    logger.info(
+                        "\nErro: {display}", display=e,
+                    )
+
+    # (3) Finaliza a tabela
+    df = (
+        df.dropna(subset=["confirmados"])
+        .fillna(0)
+        .assign(
+            confirmados=lambda df: df.confirmados.astype(int),
+            mortes=lambda df: df.mortes.astype(int),
+        )
     )
 
-    # Checa total
+    if not "Importados/Indefinidos" in df.index:
+        df.loc["Importados/Indefinidos"] = [0, 0]
+
+    # (4) Checa total
     cidades = df[df.index != "TOTAL NO ESTADO"]
     if any(cidades.sum().values != df.loc["TOTAL NO ESTADO"].values):
         logger.info(
@@ -214,11 +153,8 @@ def main(date, config, uf="RJ"):
             display1=cidades.sum(),
             display2=df.loc["TOTAL NO ESTADO"],
         )
-        # df.loc["TOTAL NO ESTADO", :] = cidades.sum()
 
-    logger.info("Checando total: {display}", display=list(df.sum() / 2))
-
-    return df.fillna(0)
+    return df
 
 
 if __name__ == "__main__":

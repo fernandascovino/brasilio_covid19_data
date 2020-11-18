@@ -6,6 +6,7 @@ import argparse
 from rj_script import main as rj_main
 from pr_script import main as pr_main
 
+scripts = {"RJ": rj_main, "PR": pr_main}
 
 if __name__ == "__main__":
 
@@ -38,10 +39,13 @@ if __name__ == "__main__":
             str(dt.today().day) if dt.today().day > 9 else "0" + str(dt.today().day)
         )
 
-    if args.UF == "RJ":
-        df = rj_main(args.DD, args.MM)
+    if args.UF in scripts.keys():
+        path = f"outputs/{args.UF.lower()}/{args.UF.lower()}_{args.MM}_{args.DD}.xlsx"
+        scripts[args.UF](args.DD, args.MM).to_excel(path)
 
-    path = f"outputs/{args.UF.lower()}/{args.UF.lower()}_{args.MM}_{args.DD}.xlsx"
-
-    df.to_excel(path)
-    logger.success("Dados salvos em: {display}", display=path)
+        logger.success("Dados salvos em: {display}", display=path)
+    else:
+        logger.error(
+            "Script não implementado para a UF! Disponíveis: {display}",
+            display=list(scripts.keys()),
+        )

@@ -1,5 +1,5 @@
 # brasilio_covid19_data
-Source code used to get Paraná (PR) and Rio de Janeiro (RJ) state's epidemiological report data daily.
+Source code used to get Paraná (PR) and Rio de Janeiro (RJ) state's epidemiological report data by day.
 
 ## How to use it?
 

@@ -16,7 +16,7 @@ def get_content(url, date, title):
         "Informe Completo e Detalhado.pdf": "Boletim - Informe Epidemiológico Coronavírus (COVID-19)",
     }
 
-    return (
+    tag = (
         BeautifulSoup(urlopen(url), "html.parser")
         .find(
             "div",
@@ -31,9 +31,14 @@ def get_content(url, date, title):
                 text=section[title]
             )
         )
-        .parent.parent.parent.find("span", {"title": title})
-        .find("a")["href"]
+        .parent.parent.parent.find(text=title)
+        .parent.parent
     )
+
+    if tag.find("a"):
+        return tag.find("a")["href"]
+    elif tag["href"]:
+        return tag["href"]
 
 
 def _fix_typos(data):
@@ -125,6 +130,7 @@ def main(day, month):
             columns={
                 "Casos": "confirmados",
                 "Obitos": "mortes",
+                "Obito": "mortes", # typo 6/ago
                 "Municipio": "municipio",
             }
         )

@@ -5,153 +5,180 @@ import pandas as pd
 from difflib import get_close_matches
 import re
 from loguru import logger
+import os
+import ssl
+
+from utils import fix_typos
 
 
-def treat_city_name(name, list_names):
+def get_report_url(day, month):
     """
-    Busca nome mais proximo dado lista de nomes e substitui termos para Importados/Indefinidos.
+    Busca URL do boletim da data especificada e retorna conteúdo.
+
+    Args:
+        day (str): Dia no formato DD/MM/AAAA
+        month (str): Mês no formato DD/MM/AAAA       
     """
 
-    if name in ["Município em investigação", "Outro estado", "Outros estados"]:
-        return "Importados/Indefinidos"
+    # TODO: melhorar função
+    # Busca no site de Covid-19 criado pelo estado
+    try:
+        if not os.environ.get("PYTHONHTTPSVERIFY", "") and getattr(
+            ssl, "_create_unverified_context", None
+        ):
+            ssl._create_default_https_context = ssl._create_unverified_context
 
-    if name == "VarreSai":
-        return "Varre-Sai"
+        url = "https://coronavirus.rj.gov.br/boletins/"
+        soup = (
+            BeautifulSoup(urlopen(url), "html.parser")
+            .find("div", {"class": "entry-content"})
+            .select(".elementor-post__read-more")
+        )
 
-    if name == "Page":
-        return "Magé"
+    # Caso falhe, busca direto nas notícias da secretaria de saúde
+    except:
+        boletim = f"https://www.saude.rj.gov.br/noticias/2020/11/boletim-coronavirus-{day}{month}"
 
-    return get_close_matches(name, list_names, cutoff=0.75)[0]
-
-
-def main(day, month):
-
-    # (1) Busca URL do boletim de hoje
-    url = "https://coronavirus.rj.gov.br/boletins/"
-    soup = (
-        BeautifulSoup(urlopen(url), "html.parser")
-        .find("div", {"class": "entry-content"})
-        .select(".elementor-post__read-more")
-    )
+        logger.info(
+            "Site de boletins está fora do ar (https://coronavirus.rj.gov.br/boletins/). Dados retirados do site da secretaria de saúde: {display}",
+            display=boletim,
+        )
+        return (
+            BeautifulSoup(urlopen(boletim), features="lxml")
+            .find("div", {"class": "materia"})
+            .find("span", {"class": "texto"})
+        )
 
     boletim = [
         i
         for i in soup
         if "coronavirus" + "-" + str(day) + "-" + str(month) in i["href"]
-    ]
-
-    # URL errada dia 30/10
-    if day == "30" and month == "10":
-        boletim = [
-            {
-                "href": "https://coronavirus.rj.gov.br/boletim/boletim-coronavirus-31-10-20-600-obitos-e-309-977-casos-confirmados-no-rj/"
-            }
-        ]
+    ][0]["href"]
 
     if len(boletim) == 0:
         logger.warning(
             "Boletim não indexado ou ainda não atualizado! Último boletim: {display}",
             display=soup[0]["href"],
         )
-    else:
-        logger.info("URL Boletim: {display}", display=boletim[0]["href"])
-        boletim = BeautifulSoup(urlopen(boletim[0]["href"]), features="lxml").find(
-            "div", {"class": "entry-content"}
-        )
+        return
 
-    # (2) Carrega e trata os dados
-    if len(boletim.findAll("p")) > 10:
+    elif day == "30" and month == "10":
+        boletim = "https://coronavirus.rj.gov.br/boletim/boletim-coronavirus-31-10-20-600-obitos-e-309-977-casos-confirmados-no-rj/"
 
-        # Cria tabela com nomes padrão das cidades
-        rj_model = pd.read_excel("models/RJ_modelo.xlsx", index_col=0)
-        df = pd.DataFrame(columns=["confirmados", "mortes"], index=rj_model.index)
-
-        # Limpa div (pega somente p que possui texto, não recursivo)
-        cleaned_div = [i for i in boletim.find_all("p") if len(i.find_all("p")) == 0]
-
-        # Trata totais
-        total = {
-            "confirmados": "casos confirmados",
-            "mortes": "óbitos por Coronavírus",
-        }
-
-        for tipo in total.keys():
-
-            df.loc["TOTAL NO ESTADO", tipo] = int(
-                re.search(
-                    "\d+(.|)\d+(?=\s+{})".format(total[tipo]),
-                    cleaned_div[0].text.replace("\xa0", " "),
-                    flags=re.IGNORECASE,
-                )
-                .group()
-                .replace(".", "")
-            )
-
-        # Trata confirmados e mortes das cidades
-        init_casos = [
-            i + 1
-            for i, e in enumerate(cleaned_div)
-            if "casos confirmados estão distribuídos" in e.text
-        ][0]
-        init_mortes = [
-            i + 1
-            for i, e in enumerate(cleaned_div)
-            if "vítimas de Covid-19 no estado" in e.text
-        ][0]
-
-        content = {
-            "confirmados": cleaned_div[init_casos : init_mortes - 1],
-            "mortes": cleaned_div[init_mortes:-1],
-        }
-
-        for tipo in content.keys():
-            for i in content[tipo]:
-                try:
-                    separator = [sep for sep in ["– ", "- "] if sep in i.text][0]
-
-                    city_name = treat_city_name(
-                        i.text.split(separator)[0].strip(), df.index
-                    )
-                    value = (
-                        i.text.split(separator)[1]
-                        .replace("–", "")
-                        .strip()
-                        .replace(".", "")
-                    )
-
-                    df.loc[city_name, tipo] = value
-
-                except Exception as e:
-                    city_name = i.text.split("–")[0].strip()
-
-                    logger.warning(
-                        "Cidade não encontrada: {display}", display=city_name,
-                    )
-
-                    logger.info(
-                        "\nErro: {display}", display=e,
-                    )
-
-    # (3) Finaliza a tabela
-    df = (
-        df.dropna(subset=["confirmados"])
-        .fillna(0)
-        .assign(
-            confirmados=lambda df: df.confirmados.astype(int),
-            mortes=lambda df: df.mortes.astype(int),
-        )
+    logger.info("URL Boletim: {display}", display=boletim[0]["href"])
+    return BeautifulSoup(urlopen(boletim), features="lxml").find(
+        "div", {"class": "entry-content"}
     )
 
+
+def treat_data(boletim):
+    """
+    Transforma dados de confirmados e mortes  por cidade de texto corrido em dataframe
+    
+    Args:
+        boletim (bs4.element.Tag): Conteúdo do corpo do boletim retornado por `get_report_url`
+    
+    Returns:
+        pd.Dataframe: Tabela de `confirmados` e `mortes` por cidade
+    """
+
+    # Limpa div (pega somente p que possui texto, não recursivo)
+    cleaned_div = [i for i in boletim.find_all("p") if len(i.find_all("p")) == 0]
+
+    # Trata formatação de confirmados e mortes das cidades
+    if len(cleaned_div) == 2:
+        cleaned_div = cleaned_div[0].text.split("\r\n") + cleaned_div[1].text.split(
+            "\r\n"
+        )
+    else:
+        cleaned_div = [i.text for i in cleaned_div if i.text != "\xa0"]
+
+    init_casos = [
+        i + 1
+        for i, e in enumerate(cleaned_div)
+        if "casos confirmados estão distribuídos" in e
+    ][0]
+
+    init_mortes = [
+        i + 1 for i, e in enumerate(cleaned_div) if "vítimas de Covid-19 no estado" in e
+    ][0]
+
+    seps = "– |- "
+
+    content = {
+        "confirmados": {
+            re.split(seps, x)[0].strip(): int(
+                re.split(seps, x)[1].strip("\n").replace(".", "")
+            )
+            for x in cleaned_div[init_casos : init_mortes - 1]
+        },
+        "mortes": {
+            re.split(seps, x)[0].strip(): int(
+                re.split(seps, x)[1].strip("\n").replace(".", "")
+            )
+            for x in cleaned_div[init_mortes:-1]
+        },
+    }
+
+    # Adiciona total do estado
+    total = {
+        "confirmados": "casos confirmados",
+        "mortes": "óbitos por Coronavírus",
+    }
+
+    for tipo in content.keys():
+        content[tipo]["TOTAL NO ESTADO"] = int(
+            re.search(
+                "\d+(.|)\d+(?=\s+{})".format(total[tipo]),
+                cleaned_div[0].replace("\xa0", " "),
+                flags=re.IGNORECASE,
+            )
+            .group()
+            .replace(".", "")
+        )
+
+    # (3) Finaliza a tabela
+    df = pd.DataFrame(content).dropna(subset=["confirmados"]).fillna(0).astype(int)
+    df.index.name = "municipio"
+
+    return df
+
+
+def main(day, month):
+
+    # (1) Busca URL do boletim da data especificada e retorna conteúdo.
+    boletim = get_report_url(day, month)
+    df = treat_data(boletim)
+
+    tricky = {
+        "MUNICÍPIO EM INVESTIGAÇÃO": "IMPORTADOS/INDEFINIDOS",
+        "OUTRO ESTADO": "IMPORTADOS/INDEFINIDOS",
+        "OUTROS ESTADOS": "IMPORTADOS/INDEFINIDOS",
+        "VARRESAI": "VARRE-SAI",
+        "PAGE": "MAGÉ",
+        "ÍTALA": "ITALVA",
+    }
+
+    # (2) Conserta nomes de municípios com base no modelo da UF.
+    df = fix_typos(df, uf="RJ", tricky=tricky)
+
+    # (3) Completa importados
     if not "Importados/Indefinidos" in df.index:
         df.loc["Importados/Indefinidos"] = [0, 0]
 
     # (4) Checa total
-    cidades = df[df.index != "TOTAL NO ESTADO"]
-    if any(cidades.sum().values != df.loc["TOTAL NO ESTADO"].values):
+    if any(
+        df[df.index != "TOTAL NO ESTADO"].sum().values
+        != df.loc["TOTAL NO ESTADO"].values
+    ):
         logger.info(
             "Soma das cidades diverge do total do estado: \n==> Soma:\n{display1}\n==> Total pela Secretaria:\n{display2}",
-            display1=cidades.sum(),
+            display1=df[df.index != "TOTAL NO ESTADO"].sum(),
             display2=df.loc["TOTAL NO ESTADO"],
+        )
+    else:
+        logger.info(
+            "Total no estado: \n{display}", display=df.loc["TOTAL NO ESTADO"],
         )
 
     return df

@@ -8,7 +8,22 @@ import re
 from loguru import logger
 
 
-def get_content(url, date, title):
+def get_report_url(date, filename="Geral.csv"):
+    """
+    Busca URL do boletim da data especificada.
+
+    Args:
+        date: str
+            Data no formato DD/MM/AAAA
+        filename: str
+            Opcional. Tipo de arquivo que se deseja buscar.
+
+            * Agregado por município: 'Geral.csv'
+            * Microdados: 'Casos e Óbitos.csv'
+            * PDF: 'Informe Completo e Detalhado.pdf'        
+    """
+
+    baseurl = "https://www.saude.pr.gov.br/Pagina/Coronavirus-COVID-19"
 
     section = {
         "Geral.csv": "Boletim - Informe Epidemiológico Coronavírus (COVID-19) - Arquivos CSV",
@@ -17,7 +32,7 @@ def get_content(url, date, title):
     }
 
     tag = (
-        BeautifulSoup(urlopen(url), "html.parser")
+        BeautifulSoup(urlopen(baseurl), "html.parser")
         .find(
             "div",
             {
@@ -28,10 +43,10 @@ def get_content(url, date, title):
             lambda tag: tag.name == "p"
             and date in tag.text
             and tag.parent.parent.parent.parent.parent.parent.parent.parent.find(
-                text=section[title]
+                text=section[filename]
             )
         )
-        .parent.parent.parent.find(text=title)
+        .parent.parent.parent.find(text=re.compile(f"^{filename}"))
         .parent.parent
     )
 
@@ -63,57 +78,52 @@ def _fix_typos(data):
     df = pd.read_excel("models/PR_modelo.xlsx", index_col=0)
     df.index = df.index.str.upper()
 
-    errors = [i for i in list(data.index) if i not in list(df.index)]
-
     rename = dict()
     not_matched = list()
-    if len(errors) > 0:
-        for city in errors:
-            match = get_close_matches(city, df.index.unique(), 1)
-            if len(match) > 0:
-                rename[city] = match[0]
-            else:
-                print(city)
-                not_matched += [city]
+    for city in data.index:
+        match = get_close_matches(city, df.index.unique(), 1)
+        if len(match) > 0:
+            rename[city] = match[0]
+        else:
+            not_matched += [city]
 
+    if len(not_matched) > 0:
         logger.warning("Typos NÃO identificados: {display}", display=not_matched)
 
-        return data.rename(index=rename)
-
-    return data
+    return data.rename(index=rename)
 
 
 def main(day, month):
 
     # (1) Busca URL do boletim de hoje
-    url = "https://www.saude.pr.gov.br/Pagina/Coronavirus-COVID-19"
-
-    # try:
     date = day + "/" + month + "/2020"
-    tables = {
-        "geral": get_content(url, date, "Geral.csv"),
-        "municipios": get_content(url, date, "Casos e Óbitos.csv"),
-    }
 
-    logger.info("URL Boletim (CSV): {display}", display=tables["municipios"])
+    try:
+        tables = {
+            "geral": get_report_url(date, filename="Geral.csv"),
+            "municipios": get_report_url(date, filename="Casos e Óbitos.csv"),
+        }
+
+        logger.info("URL Boletim (CSV): {display}", display=tables["municipios"])
+    except Exception as e:
+        logger.error("Boletim não encontrado! - ERRO: {error}", error=e)
 
     # TODO: verificar erros na estrutura HTML de algumas datas para o PDF
     try:
         logger.info(
             "URL Boletim (PDF): {display}",
-            display=get_content(url, date, "Informe Completo e Detalhado.pdf"),
+            display=get_report_url(date, filename="Informe Completo e Detalhado.pdf"),
         )
     except:
         pass
 
     for k in tables.keys():
         try:
-            tables[k] = pd.read_csv(tables[k], sep=";", skiprows=0)
+            tables[k] = pd.read_csv(tables[k], sep=";", skiprows=0, low_memory=False)
         except:
-            tables[k] = pd.read_csv(tables[k], sep=";", skiprows=0, encoding="latin-1")
-
-    # except Exception as e:
-    #     logger.error("Boletim não encontrado! - ERRO: {error}", error=e)
+            tables[k] = pd.read_csv(
+                tables[k], sep=";", skiprows=0, encoding="latin-1", low_memory=False
+            )
 
     # (2) Contabiliza importados (tem somente nos microdados)
     importados = {
@@ -130,7 +140,7 @@ def main(day, month):
             columns={
                 "Casos": "confirmados",
                 "Obitos": "mortes",
-                "Obito": "mortes", # typo 6/ago
+                "Obito": "mortes",  # typo 6/ago
                 "Municipio": "municipio",
             }
         )
@@ -173,8 +183,8 @@ def main(day, month):
         if len(check) > 0:
             logger.warning(
                 "Dados divergentes entre tabelas: \n==> Microdados:\n{display1}\n==> Agregado:\n{display2}",
-                display1=tables["geral"][check],
-                display2=tables["municipios"][check],
+                display1=tables["geral"].loc[check],
+                display2=tables["municipios"].loc[check],
             )
     except:
         diff = set(tables["municipios"].index) - set(tables["geral"].index)
@@ -192,8 +202,14 @@ def main(day, month):
             )
 
     logger.info(
-        "Total no estado: \n{display}",
-        display=tables["municipios"].loc["TOTAL NO ESTADO"],
+        "Total no estado (sem importados): \n{display}",
+        display=tables["municipios"].loc["TOTAL NO ESTADO"]
+        - tables["municipios"].loc["Importados/Indefinidos"],
+    )
+
+    logger.info(
+        "Importados/Indefinidos: \n{display}",
+        display=tables["municipios"].loc["Importados/Indefinidos"],
     )
 
     # O que retorna? Tabela agregada + Importados dos microdados

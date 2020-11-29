@@ -3,9 +3,10 @@ from bs4 import BeautifulSoup
 import bs4
 import numpy as np
 import pandas as pd
-from difflib import get_close_matches
 import re
 from loguru import logger
+
+from utils import fix_typos
 
 
 def get_report_url(date, filename="Geral.csv"):
@@ -13,10 +14,8 @@ def get_report_url(date, filename="Geral.csv"):
     Busca URL do boletim da data especificada.
 
     Args:
-        date: str
-            Data no formato DD/MM/AAAA
-        filename: str
-            Opcional. Tipo de arquivo que se deseja buscar.
+        date (str): Data no formato DD/MM/AAAA
+        filename (str): Opcional. Tipo de arquivo que se deseja buscar.
 
             * Agregado por município: 'Geral.csv'
             * Microdados: 'Casos e Óbitos.csv'
@@ -54,43 +53,6 @@ def get_report_url(date, filename="Geral.csv"):
         return tag.find("a")["href"]
     elif tag["href"]:
         return tag["href"]
-
-
-def _fix_typos(data):
-
-    # conserta casos limites
-    data.index = data.index.str.upper()
-
-    tricky = {
-        "CAMBARA": "CAMBARÁ",
-        "GUAIRACA": "GUAIRAÇÁ",
-        "GUAIRA": "GUAÍRA",
-        "PINHAO": "PINHÃO",
-    }
-
-    data = (
-        data.reset_index()
-        .assign(municipio=lambda df: df.municipio.replace(tricky))
-        .set_index("municipio")
-    )
-
-    # busca nome + proximo no modelo
-    df = pd.read_excel("models/PR_modelo.xlsx", index_col=0)
-    df.index = df.index.str.upper()
-
-    rename = dict()
-    not_matched = list()
-    for city in data.index:
-        match = get_close_matches(city, df.index.unique(), 1)
-        if len(match) > 0:
-            rename[city] = match[0]
-        else:
-            not_matched += [city]
-
-    if len(not_matched) > 0:
-        logger.warning("Typos NÃO identificados: {display}", display=not_matched)
-
-    return data.rename(index=rename)
 
 
 def main(day, month):
@@ -134,6 +96,13 @@ def main(day, month):
     }
 
     # (2) Trata dados agregados
+    tricky = {
+        "CAMBARA": "CAMBARÁ",
+        "GUAIRACA": "GUAIRAÇÁ",
+        "GUAIRA": "GUAÍRA",
+        "PINHAO": "PINHÃO",
+    }
+
     tables["municipios"] = (
         tables["municipios"]
         .rename(
@@ -145,7 +114,7 @@ def main(day, month):
             }
         )
         .set_index("municipio")[["confirmados", "mortes"]]
-        .pipe(_fix_typos)
+        .pipe(fix_typos, uf="PR", tricky=tricky)
     )
 
     # (3) Trata microdados
@@ -164,7 +133,7 @@ def main(day, month):
         tables["geral"]
         .groupby("municipio")["mortes"]
         .agg(confirmados="count", mortes=sum)
-        .pipe(_fix_typos)
+        .pipe(fix_typos, uf="PR", tricky=tricky)
         .reset_index()
         .groupby("municipio")
         .agg("sum")

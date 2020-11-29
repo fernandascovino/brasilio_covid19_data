@@ -86,12 +86,20 @@ def treat_data(boletim):
     cleaned_div = [i for i in boletim.find_all("p") if len(i.find_all("p")) == 0]
 
     # Trata formatação de confirmados e mortes das cidades
+    # TODO: melhorar condicional... diferenciar estrutura de cidade por `p` X numa mesma `p`, separado por `br`
     if len(cleaned_div) == 2:
         cleaned_div = cleaned_div[0].text.split("\r\n") + cleaned_div[1].text.split(
             "\r\n"
         )
+    elif len(cleaned_div) == 5:
+        aux = cleaned_div.copy()
+        cleaned_div = []
+        for i in range(len(aux)):
+            cleaned_div += aux[i].text.split("\r\n")
     else:
-        cleaned_div = [i.text for i in cleaned_div if i.text != "\xa0"]
+        cleaned_div = [i.text for i in cleaned_div]
+
+    cleaned_div = [i for i in cleaned_div if i not in ["\xa0", "\n", ""]]
 
     init_casos = [
         i + 1

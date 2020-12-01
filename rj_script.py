@@ -40,7 +40,7 @@ def get_report_url(day, month):
         boletim = f"https://www.saude.rj.gov.br/noticias/2020/11/boletim-coronavirus-{day}{month}"
 
         logger.info(
-            "Site de boletins está fora do ar (https://coronavirus.rj.gov.br/boletins/). Dados retirados do site da secretaria de saúde: {display}",
+            "Site de boletins está fora do ar (https://coronavirus.rj.gov.br/boletins/). Dados retirados do site da secretaria de saúde: {display}\n",
             display=boletim,
         )
         return (
@@ -57,7 +57,7 @@ def get_report_url(day, month):
 
     if len(boletim) == 0:
         logger.warning(
-            "Boletim não indexado ou ainda não atualizado! Último boletim: {display}",
+            "Boletim não indexado ou ainda não atualizado! Último boletim: {display}\n",
             display=soup[0]["href"],
         )
         return
@@ -65,7 +65,7 @@ def get_report_url(day, month):
     elif day == "30" and month == "10":
         boletim = "https://coronavirus.rj.gov.br/boletim/boletim-coronavirus-31-10-20-600-obitos-e-309-977-casos-confirmados-no-rj/"
 
-    logger.info("URL Boletim: {display}", display=boletim[0]["href"])
+    logger.info("URL Boletim: {display}\n", display=boletim[0]["href"])
     return BeautifulSoup(urlopen(boletim), features="lxml").find(
         "div", {"class": "entry-content"}
     )
@@ -180,13 +180,13 @@ def main(day, month):
         != df.loc["TOTAL NO ESTADO"].values
     ):
         logger.info(
-            "Soma das cidades diverge do total do estado: \n==> Soma:\n{display1}\n==> Total pela Secretaria:\n{display2}",
-            display1=df[df.index != "TOTAL NO ESTADO"].sum(),
-            display2=df.loc["TOTAL NO ESTADO"],
+            "SOMA DIVERGENTE \nTotal de mortes do estado difere da soma dos municípios divulgado pela Secretaria: \n\n* Soma dos municípios: {display1}\n* Total do estado:\n{display2}\n",
+            display1=df[df.index != "TOTAL NO ESTADO"].sum().to_dict(),
+            display2=df.loc["TOTAL NO ESTADO"].to_dict(),
         )
     else:
         logger.info(
-            "Total no estado: \n{display}", display=df.loc["TOTAL NO ESTADO"],
+            "Total no estado: \n{display}\n", display=df.loc["TOTAL NO ESTADO"],
         )
 
     return df

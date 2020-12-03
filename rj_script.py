@@ -7,6 +7,7 @@ import re
 from loguru import logger
 import os
 import ssl
+import unidecode
 
 from utils import fix_typos
 
@@ -37,17 +38,27 @@ def get_report_url(day, month):
 
     # Caso falhe, busca direto nas notícias da secretaria de saúde
     except:
-        boletim = f"https://www.saude.rj.gov.br/noticias/2020/11/boletim-coronavirus-{day}{month}"
+        boletim = f"https://www.saude.rj.gov.br/noticias/2020/{month}/boletim-coronavirus-{day}{month}"
 
-        logger.info(
-            "Site de boletins está fora do ar (https://coronavirus.rj.gov.br/boletins/). Dados retirados do site da secretaria de saúde: {display}\n",
-            display=boletim,
-        )
-        return (
-            BeautifulSoup(urlopen(boletim), features="lxml")
-            .find("div", {"class": "materia"})
-            .find("span", {"class": "texto"})
-        )
+        try:
+            content = (
+                BeautifulSoup(urlopen(boletim), features="lxml")
+                .find("div", {"class": "materia"})
+                .find("span", {"class": "texto"})
+            )
+
+            logger.info(
+                "Site de boletins está fora do ar (https://coronavirus.rj.gov.br/boletins/). Dados retirados do site da secretaria de saúde: {display}\n",
+                display=boletim,
+            )
+            return content
+        except:
+            logger.info(
+                "URL não encontrada nos boletins (https://coronavirus.rj.gov.br/boletins/) nem nas notícias da SES (https://www.saude.rj.gov.br/noticias/2020/)\n",
+                display=boletim,
+            )
+
+            return
 
     boletim = [
         i
@@ -127,6 +138,10 @@ def treat_data(boletim):
             for x in cleaned_div[init_mortes:-1]
         },
     }
+
+    # Remove acentos para normalizar nomes
+    for tipo in content.keys():
+        content[tipo] = {unidecode.unidecode(k): v for k, v in content[tipo].items()}
 
     # Adiciona total do estado
     total = {

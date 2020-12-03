@@ -1,6 +1,7 @@
 from difflib import get_close_matches
 import pandas as pd
 from loguru import logger
+import unidecode
 
 
 def fix_typos(data, uf, tricky=None):
@@ -27,7 +28,7 @@ def fix_typos(data, uf, tricky=None):
 
     # busca nome + proximo no modelo
     df = pd.read_excel(f"models/{uf}_modelo.xlsx", index_col=0)
-    df.index = df.index.str.upper()
+    df.index = df.index.str.upper().map(unidecode.unidecode)
 
     rename = dict()
     not_matched = list()

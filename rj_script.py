@@ -139,9 +139,11 @@ def treat_data(boletim):
         },
     }
 
-    # Remove acentos para normalizar nomes
+    # Remove acentos e transforma em uppercase para normalizar nomes
     for tipo in content.keys():
-        content[tipo] = {unidecode.unidecode(k): v for k, v in content[tipo].items()}
+        content[tipo] = {
+            unidecode.unidecode(k.upper()): v for k, v in content[tipo].items()
+        }
 
     # Adiciona total do estado
     total = {

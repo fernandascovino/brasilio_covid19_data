@@ -9,7 +9,35 @@ from loguru import logger
 from utils import fix_typos
 
 
-def get_report_url(date, filename="Geral.csv"):
+def _get_url_from_html(tag, date, filename):
+    section = {
+        "Geral": {
+            "name": "Boletim - Informe Epidemiológico Coronavírus (COVID-19) - Arquivos CSV",
+            "find_name": True,
+        },
+        "Casos e Óbitos": {
+            "name": "Boletim - Informe Epidemiológico Coronavírus (COVID-19) - Arquivos CSV",
+            "find_name": True,
+        },
+        "Informe Completo": {
+            "name": "Boletim - Informe Epidemiológico Coronavírus (COVID-19)",
+            "find_name": False,
+        },
+    }
+
+    if section[filename]["find_name"]:
+        return (
+            tag.name == "p"
+            and date in tag.text
+            and tag.parent.parent.parent.parent.parent.parent.parent.parent.find(
+                text=section[filename]["name"]
+            )
+        )
+    else:
+        return tag.name == "p" and date in tag.text
+
+
+def get_report_url(date, filename="Geral"):
     """
     Busca URL do boletim da data especificada.
 
@@ -17,17 +45,17 @@ def get_report_url(date, filename="Geral.csv"):
         date (str): Data no formato DD/MM/AAAA
         filename (str): Opcional. Tipo de arquivo que se deseja buscar.
 
-            * Agregado por município: 'Geral.csv'
-            * Microdados: 'Casos e Óbitos.csv'
-            * PDF: 'Informe Completo e Detalhado.pdf'        
+            * Agregado por município: 'Geral'
+            * Microdados: 'Casos e Óbitos'
+            * PDF: 'Informe Completo'        
     """
 
     baseurl = "https://www.saude.pr.gov.br/Pagina/Coronavirus-COVID-19"
 
     section = {
-        "Geral.csv": "Boletim - Informe Epidemiológico Coronavírus (COVID-19) - Arquivos CSV",
-        "Casos e Óbitos.csv": "Boletim - Informe Epidemiológico Coronavírus (COVID-19) - Arquivos CSV",
-        "Informe Completo e Detalhado.pdf": "Boletim - Informe Epidemiológico Coronavírus (COVID-19)",
+        "Geral": "Boletim - Informe Epidemiológico Coronavírus (COVID-19) - Arquivos CSV",
+        "Casos e Óbitos": "Boletim - Informe Epidemiológico Coronavírus (COVID-19) - Arquivos CSV",
+        "Informe Completo": "Boletim - Informe Epidemiológico Coronavírus (COVID-19)",
     }
 
     tag = (
@@ -38,14 +66,8 @@ def get_report_url(date, filename="Geral.csv"):
                 "class": "field field--name-field-texto field--type-text-long field--label-hidden field--item"
             },
         )
-        .find(
-            lambda tag: tag.name == "p"
-            and date in tag.text
-            and tag.parent.parent.parent.parent.parent.parent.parent.parent.find(
-                text=section[filename]
-            )
-        )
-        .parent.parent.parent.find(text=re.compile(f"^{filename}"))
+        .find(lambda tag: _get_url_from_html(tag, date, filename))
+        .parent.parent.parent.find(text=re.compile(f"^{filename}( *|)(.csv|.pdf|)$"))
         .parent.parent
     )
 
@@ -62,8 +84,8 @@ def main(day, month):
 
     try:
         tables = {
-            "geral": get_report_url(date, filename="Geral.csv"),
-            "municipios": get_report_url(date, filename="Casos e Óbitos.csv"),
+            "geral": get_report_url(date, filename="Geral"),
+            "municipios": get_report_url(date, filename="Casos e Óbitos"),
         }
 
         logger.info("URL Boletim (CSV): {display}", display=tables["municipios"])
@@ -74,7 +96,7 @@ def main(day, month):
     try:
         logger.info(
             "URL Boletim (PDF): {display}",
-            display=get_report_url(date, filename="Informe Completo e Detalhado.pdf"),
+            display=get_report_url(date, filename="Informe Completo"),
         )
     except:
         pass
@@ -97,10 +119,10 @@ def main(day, month):
 
     # (2) Trata dados agregados
     tricky = {
-        "CAMBARA": "CAMBARÁ",
-        "GUAIRACA": "GUAIRAÇÁ",
-        "GUAIRA": "GUAÍRA",
-        "PINHAO": "PINHÃO",
+        "CAMBARÁ": "CAMBARA",
+        "GUAIRAÇÁ": "GUAIRACA",
+        "GUAÍRA": "GUAIRA",
+        "PINHÃO": "PINHAO",
     }
 
     tables["municipios"] = (

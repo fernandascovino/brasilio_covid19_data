@@ -47,11 +47,13 @@ def get_report_url(day, month):
                 .find("span", {"class": "texto"})
             )
 
+            # TODO: remover repeticao de codigo
+            logger.info("URL Boletim: {display}\n", display=boletim)
             logger.info(
-                "Site de boletins está fora do ar (https://coronavirus.rj.gov.br/boletins/). Dados retirados do site da secretaria de saúde: {display}\n",
-                display=boletim,
+                "Site de boletins está fora do ar (https://coronavirus.rj.gov.br/boletins/). Dados retirados do site da secretaria de saúde.\n"
             )
             return content
+
         except:
             logger.info(
                 "URL não encontrada nos boletins (https://coronavirus.rj.gov.br/boletins/) nem nas notícias da SES (https://www.saude.rj.gov.br/noticias/2020/)\n",
@@ -142,13 +144,23 @@ def treat_data(boletim):
     # Remove acentos e transforma em uppercase para normalizar nomes
     for tipo in content.keys():
         content[tipo] = {
-            unidecode.unidecode(k.upper()): v for k, v in content[tipo].items()
+            unidecode.unidecode(k.upper().replace("  ", " ")): v
+            for k, v in content[tipo].items()
         }
 
     # Adiciona total do estado
     total = {
         "confirmados": "casos confirmados",
         "mortes": "óbitos por Coronavírus",
+    }
+
+    tricky = {
+        "MUNICÍPIO EM INVESTIGAÇÃO": "IMPORTADOS/INDEFINIDOS",
+        "OUTRO ESTADO": "IMPORTADOS/INDEFINIDOS",
+        "OUTROS ESTADOS": "IMPORTADOS/INDEFINIDOS",
+        "VARRESAI": "VARRE-SAI",
+        "PAGE": "MAGE",
+        "ÍTALA": "ITALVA",
     }
 
     for tipo in content.keys():
@@ -161,6 +173,12 @@ def treat_data(boletim):
             .group()
             .replace(".", "")
         )
+
+        for old_key, new_key in tricky.items():
+            try:
+                content[tipo][new_key] = content[tipo].pop(old_key)
+            except:
+                pass
 
     # (3) Finaliza a tabela
     df = pd.DataFrame(content).dropna(subset=["confirmados"]).fillna(0).astype(int)
@@ -175,17 +193,8 @@ def main(day, month):
     boletim = get_report_url(day, month)
     df = treat_data(boletim)
 
-    tricky = {
-        "MUNICÍPIO EM INVESTIGAÇÃO": "IMPORTADOS/INDEFINIDOS",
-        "OUTRO ESTADO": "IMPORTADOS/INDEFINIDOS",
-        "OUTROS ESTADOS": "IMPORTADOS/INDEFINIDOS",
-        "VARRESAI": "VARRE-SAI",
-        "PAGE": "MAGÉ",
-        "ÍTALA": "ITALVA",
-    }
-
     # (2) Conserta nomes de municípios com base no modelo da UF.
-    df = fix_typos(df, uf="RJ", tricky=tricky)
+    df = fix_typos(df, uf="RJ")
 
     # (3) Completa importados
     if not "Importados/Indefinidos" in df.index:

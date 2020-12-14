@@ -8,6 +8,7 @@ from loguru import logger
 import os
 import ssl
 import unidecode
+import time
 
 from utils import fix_typos
 
@@ -21,8 +22,7 @@ def get_report_url(day, month):
         month (str): Mês no formato DD/MM/AAAA       
     """
 
-    # TODO: melhorar função
-    # Busca no site de Covid-19 criado pelo estado
+    # Busca primeiro no site de boletins
     try:
         if not os.environ.get("PYTHONHTTPSVERIFY", "") and getattr(
             ssl, "_create_unverified_context", None
@@ -30,11 +30,24 @@ def get_report_url(day, month):
             ssl._create_default_https_context = ssl._create_unverified_context
 
         url = "https://coronavirus.rj.gov.br/boletins/"
-        soup = (
-            BeautifulSoup(urlopen(url), "html.parser")
-            .find("div", {"class": "entry-content"})
-            .select(".elementor-post__read-more")
+        soup = BeautifulSoup(urlopen(url), "html.parser").find_all(
+            name="a", attrs={"class": "elementor-post__thumbnail__link"}
         )
+        soup = [i["href"] for i in soup]
+
+        boletim = [
+            i for i in soup if "coronavirus" + "-" + str(day) + "-" + str(month) in i
+        ]
+
+        if day == "30" and month == "10":
+            boletim = [
+                "https://coronavirus.rj.gov.br/boletim/boletim-coronavirus-31-10-20-600-obitos-e-309-977-casos-confirmados-no-rj/"
+            ]
+
+        logger.info("URL Boletim: {display}\n", display=boletim[0])
+        time.sleep(2)
+        boletim = BeautifulSoup(urlopen(boletim[0]), features="lxml")
+        return boletim.find("div", {"class": "entry-content"})
 
     # Caso falhe, busca direto nas notícias da secretaria de saúde
     except:
@@ -60,28 +73,12 @@ def get_report_url(day, month):
                 display=boletim,
             )
 
+            logger.warning(
+                "Boletim não indexado ou ainda não atualizado! Último boletim nos Boletins Coronavírus RJ: {display}\n",
+                display=soup[0],
+            )
+
             return
-
-    boletim = [
-        i
-        for i in soup
-        if "coronavirus" + "-" + str(day) + "-" + str(month) in i["href"]
-    ][0]["href"]
-
-    if len(boletim) == 0:
-        logger.warning(
-            "Boletim não indexado ou ainda não atualizado! Último boletim: {display}\n",
-            display=soup[0]["href"],
-        )
-        return
-
-    elif day == "30" and month == "10":
-        boletim = "https://coronavirus.rj.gov.br/boletim/boletim-coronavirus-31-10-20-600-obitos-e-309-977-casos-confirmados-no-rj/"
-
-    logger.info("URL Boletim: {display}\n", display=boletim[0]["href"])
-    return BeautifulSoup(urlopen(boletim), features="lxml").find(
-        "div", {"class": "entry-content"}
-    )
 
 
 def treat_data(boletim):
@@ -99,12 +96,13 @@ def treat_data(boletim):
     cleaned_div = [i for i in boletim.find_all("p") if len(i.find_all("p")) == 0]
 
     # Trata formatação de confirmados e mortes das cidades
-    # TODO: melhorar condicional... diferenciar estrutura de cidade por `p` X numa mesma `p`, separado por `br`
     if len(cleaned_div) == 2:
         cleaned_div = cleaned_div[0].text.split("\r\n") + cleaned_div[1].text.split(
             "\r\n"
         )
-    elif len(cleaned_div) == 5:
+    # TODO: melhorar condicional... diferenciar estrutura de cidade por
+    # `p` (muitos ps) X numa mesma `p`, separado por `br` (alguns ps)
+    elif len(cleaned_div) < 20:
         aux = cleaned_div.copy()
         cleaned_div = []
         for i in range(len(aux)):

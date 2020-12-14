@@ -5,39 +5,35 @@ import numpy as np
 import pandas as pd
 import re
 from loguru import logger
+import time
 
 from utils import fix_typos
 
 
-def _get_url_from_html(tag, date, filename):
-    section = {
-        "Geral": {
-            "name": "Boletim - Informe Epidemiológico Coronavírus (COVID-19) - Arquivos CSV",
-            "find_name": True,
-        },
-        "Casos e Óbitos": {
-            "name": "Boletim - Informe Epidemiológico Coronavírus (COVID-19) - Arquivos CSV",
-            "find_name": True,
-        },
-        "Informe Completo": {
-            "name": "Boletim - Informe Epidemiológico Coronavírus (COVID-19)",
-            "find_name": False,
-        },
-    }
+def _iterable_text_search(content, text):
+    """
+    Busca por um texto específico em todos os childs de um html, retorna uma lista do(s) child(s) achados.
+    
+    Args:
+        content (bs4.element.Tag or list): Elemento ou lista de elementos html para busca
+        text (str): Texto a ser buscado nos elementos
+    Returns:
+        list
+    """
+    if type(content) == bs4.element.Tag:
+        content = content.contents
 
-    if section[filename]["find_name"]:
-        return (
-            tag.name == "p"
-            and date in tag.text
-            and tag.parent.parent.parent.parent.parent.parent.parent.parent.find(
-                text=section[filename]["name"]
-            )
-        )
-    else:
-        return tag.name == "p" and date in tag.text
+    result = []
+    for item in content:
+        if type(item) == bs4.element.NavigableString:
+            pass
+        elif item.find(text=re.compile(text + "(\d+|)", flags=re.I)):
+            result.append(item)
+
+    return result
 
 
-def get_report_url(date, filename="Geral"):
+def get_report_url(date, filename):
     """
     Busca URL do boletim da data especificada.
 
@@ -52,29 +48,29 @@ def get_report_url(date, filename="Geral"):
 
     baseurl = "https://www.saude.pr.gov.br/Pagina/Coronavirus-COVID-19"
 
-    section = {
-        "Geral": "Boletim - Informe Epidemiológico Coronavírus (COVID-19) - Arquivos CSV",
-        "Casos e Óbitos": "Boletim - Informe Epidemiológico Coronavírus (COVID-19) - Arquivos CSV",
-        "Informe Completo": "Boletim - Informe Epidemiológico Coronavírus (COVID-19)",
-    }
-
-    tag = (
-        BeautifulSoup(urlopen(baseurl), "html.parser")
-        .find(
-            "div",
-            {
-                "class": "field field--name-field-texto field--type-text-long field--label-hidden field--item"
-            },
-        )
-        .find(lambda tag: _get_url_from_html(tag, date, filename))
-        .parent.parent.parent.find(text=re.compile(f"^{filename}( *|)(.csv|.pdf|)$"))
-        .parent.parent
+    content = BeautifulSoup(urlopen(baseurl), "html.parser").find(
+        "div",
+        {
+            "class": "field field--name-field-texto field--type-text-long field--label-hidden field--item"
+        },
     )
 
-    if tag.find("a"):
-        return tag.find("a")["href"]
-    elif tag["href"]:
-        return tag["href"]
+    # Busca os arquivos na tabela do site respectivos a data
+    files = [
+        x.parent.parent
+        for x in _iterable_text_search(
+            content.find_all("div", {"class": "content"}), date
+        )
+    ]
+
+    # Captura a URL do arquivo específico referente à data
+    for i in _iterable_text_search(files, filename):
+        if i.find("span", {"title": re.compile(filename + "(\d+|)", flags=re.I)}):
+            return i.find(
+                "span", {"title": re.compile(filename + "(\d+|)", flags=re.I)}
+            ).a["href"]
+        else:
+            return
 
 
 def main(day, month):
@@ -88,11 +84,13 @@ def main(day, month):
             "municipios": get_report_url(date, filename="Casos e Óbitos"),
         }
 
-        logger.info("URL Boletim (CSV): {display}", display=tables["municipios"])
+        logger.info("URL Boletim (Municípios): {display}", display=tables["municipios"])
+        logger.info("URL Boletim (Microdados): {display}", display=tables["geral"])
     except Exception as e:
         logger.error("Boletim não encontrado! - ERRO: {error}", error=e)
 
     # TODO: verificar erros na estrutura HTML de algumas datas para o PDF
+    time.sleep(1)
     try:
         logger.info(
             "URL Boletim (PDF): {display}",
@@ -100,6 +98,22 @@ def main(day, month):
         )
     except:
         pass
+
+    # Nomes padrão de colunas
+    rename = {
+        "geral": {
+            "IBGE": "cod_municipio",
+            "IBGE_RES_PR": "cod_municipio",
+            "DATA_OBITO": "mortes",
+            "MUN_RESIDENCIA": "municipio",
+        },
+        "municipios": {
+            "Casos": "confirmados",
+            "Obitos": "mortes",
+            "Obito": "mortes",  # typo 6/ago
+            "Municipio": "municipio",
+        },
+    }
 
     for k in tables.keys():
         try:
@@ -109,11 +123,15 @@ def main(day, month):
                 tables[k], sep=";", skiprows=0, encoding="latin-1", low_memory=False
             )
 
+        # Padroniza colunas
+        tables[k] = tables[k].rename(columns=rename[k])
+
     # (2) Contabiliza importados (tem somente nos microdados)
+    # print(tables["geral"].columns)
     importados = {
-        "confirmados": len(tables["geral"].query("IBGE_RES_PR == 9999999")),
+        "confirmados": len(tables["geral"].query("cod_municipio == 9999999")),
         "mortes": len(
-            tables["geral"].query("IBGE_RES_PR == 9999999 & DATA_OBITO == DATA_OBITO")
+            tables["geral"].query("cod_municipio == 9999999").dropna(subset=["mortes"])
         ),
     }
 
@@ -127,14 +145,6 @@ def main(day, month):
 
     tables["municipios"] = (
         tables["municipios"]
-        .rename(
-            columns={
-                "Casos": "confirmados",
-                "Obitos": "mortes",
-                "Obito": "mortes",  # typo 6/ago
-                "Municipio": "municipio",
-            }
-        )
         .set_index("municipio")[["confirmados", "mortes"]]
         .pipe(fix_typos, uf="PR", tricky=tricky)
     )
@@ -142,10 +152,7 @@ def main(day, month):
     # (3) Trata microdados
     tables["geral"] = (
         tables["geral"]
-        .query("IBGE_RES_PR != 9999999")
-        .rename(columns={"DATA_OBITO": "mortes", "MUN_RESIDENCIA": "municipio",})[
-            ["municipio", "mortes"]
-        ]
+        .query("cod_municipio != 9999999")[["municipio", "mortes"]]
         .fillna(0)
     )
 

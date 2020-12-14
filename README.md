@@ -1,6 +1,8 @@
 # brasilio_covid19_data 🦠
 Source code used to get Paraná (PR) and Rio de Janeiro (RJ) state's epidemiological report data by day for Brasil.IO.
 
+Checkout the data on: https://brasil.io/dataset/covid19/caso_full/
+
 ## Run local to get data
 
 ```bash

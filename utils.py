@@ -27,13 +27,15 @@ def fix_typos(data, uf, tricky=None):
         )
 
     # busca nome + proximo no modelo
-    df = pd.read_excel(f"models/{uf}_modelo.xlsx", index_col=0)
-    df.index = df.index.str.upper().map(unidecode.unidecode)
+    df = pd.read_excel(f"models/{uf}_modelo.xlsx")
+    df["municipio"] = (
+        df["municipio"].str.upper().map(unidecode.unidecode).replace(tricky)
+    )
 
     rename = dict()
     not_matched = list()
     for city in data.index:
-        match = get_close_matches(city, df.index.unique(), 1)
+        match = get_close_matches(city, df["municipio"].unique(), 1)
         if len(match) > 0:
             rename[city] = match[0]
         else:

@@ -92,26 +92,28 @@ def treat_data(boletim):
         pd.Dataframe: Tabela de `confirmados` e `mortes` por cidade
     """
 
-    # Limpa div (pega somente p que possui texto, não recursivo)
+    # (1) Limpa div: pega somente parágrafos que não vazios na camada
+    # mais alta do html (i.e. não recursivo)
     cleaned_div = [i for i in boletim.find_all("p") if len(i.find_all("p")) == 0]
 
-    # Trata formatação de confirmados e mortes das cidades
-    if len(cleaned_div) == 2:
-        cleaned_div = cleaned_div[0].text.split("\r\n") + cleaned_div[1].text.split(
-            "\r\n"
-        )
-    # TODO: melhorar condicional... diferenciar estrutura de cidade por
-    # `p` (muitos ps) X numa mesma `p`, separado por `br` (alguns ps)
-    elif len(cleaned_div) < 20:
-        aux = cleaned_div.copy()
-        cleaned_div = []
-        for i in range(len(aux)):
-            cleaned_div += aux[i].text.split("\r\n")
-    else:
-        cleaned_div = [i.text for i in cleaned_div]
+    # (2) Conserta estrutura do texto corrido para lista: ao final da iteração,
+    # a lista deve ser composta SOMENTE de "Cidade - XXXXX" e parágrafos da notícia.
+    aux = cleaned_div.copy()
+    cleaned_div = list()
+    # Itera na lista de parágrafos: pode ter diversas estruturas, desde
+    # todas as cidades numa mesma tag ("p") até uma cidade por tag ("p").
+    for i in range(len(aux)):
+        text = aux[i].text.split("\r\n")
+        # Captura textos não vazios
+        if text not in ["\xa0", "\n", ""]:
+            # Caso todas as cidades estejam na mesma tag ("p"), cria
+            # lista por quebra de linha ("\n" transformado do html "</br>")
+            nested = [x.split("\n") for x in text]
+            flatten = [item for sublist in nested for item in sublist]
+            # Adiciona os itens na lista de casos e mortes por município
+            cleaned_div += flatten
 
-    cleaned_div = [i for i in cleaned_div if i not in ["\xa0", "\n", ""]]
-
+    # (3) Identifica casos e mortes e cria dicionário de dados dos municípios
     init_casos = [
         i + 1
         for i, e in enumerate(cleaned_div)

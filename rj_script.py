@@ -13,6 +13,50 @@ import time
 from utils import fix_typos
 
 
+def _search_boletim_page(search):
+    """
+    Busca URL da data especificada em search em todas as páginas do site
+    Boletins Coronavírus RJ: https://coronavirus.rj.gov.br/boletins/
+
+    Args:
+        search (str): texto para busca do boletim da data ('coronavirus-DD-MM')
+    """
+    if not os.environ.get("PYTHONHTTPSVERIFY", "") and getattr(
+        ssl, "_create_unverified_context", None
+    ):
+
+        # Cria autenticacao para navegar a pagina
+        ssl._create_default_https_context = ssl._create_unverified_context
+
+        # Itera nos links da pagina atual e proximas para encontrar url
+        # que contenha search
+        url = "https://coronavirus.rj.gov.br/boletins/1"
+        boletim = None
+        page_next = 2
+        links = ["qualquer", "coisa"]
+
+        while len(links) > 0:
+            # Obtem links dos boletins da pagina atual
+            links = [
+                i["href"]
+                for i in BeautifulSoup(urlopen(url), "html.parser").find_all(
+                    name="a", attrs={"class": "elementor-post__thumbnail__link"}
+                )
+            ]
+            for link in links:
+                if search in link:
+                    boletim = link
+                    break
+            print("aqui:", url, boletim)
+            if not boletim:
+                url = url[:-1] + str(page_next)
+                page_next += 1
+            else:
+                break
+
+        return boletim
+
+
 def get_report_url(day, month):
     """
     Busca URL do boletim da data especificada e retorna conteúdo.
@@ -24,29 +68,17 @@ def get_report_url(day, month):
 
     # Busca primeiro no site de boletins
     try:
-        if not os.environ.get("PYTHONHTTPSVERIFY", "") and getattr(
-            ssl, "_create_unverified_context", None
-        ):
-            ssl._create_default_https_context = ssl._create_unverified_context
-
-        url = "https://coronavirus.rj.gov.br/boletins/"
-        soup = BeautifulSoup(urlopen(url), "html.parser").find_all(
-            name="a", attrs={"class": "elementor-post__thumbnail__link"}
-        )
-        soup = [i["href"] for i in soup]
-
-        boletim = [
-            i for i in soup if "coronavirus" + "-" + str(day) + "-" + str(month) in i
-        ]
+        search = "coronavirus" + "-" + str(day) + "-" + str(month)
+        boletim = _search_boletim_page(search)
 
         if day == "30" and month == "10":
-            boletim = [
-                "https://coronavirus.rj.gov.br/boletim/boletim-coronavirus-31-10-20-600-obitos-e-309-977-casos-confirmados-no-rj/"
-            ]
+            boletim = "https://coronavirus.rj.gov.br/boletim/boletim-coronavirus-31-10-20-600-obitos-e-309-977-casos-confirmados-no-rj/"
 
-        logger.info("URL Boletim: {display}\n", display=boletim[0])
+        if boletim:
+            logger.info("URL Boletim: {display}\n", display=boletim)
+
         time.sleep(2)
-        boletim = BeautifulSoup(urlopen(boletim[0]), features="lxml")
+        boletim = BeautifulSoup(urlopen(boletim), features="lxml")
         return boletim.find("div", {"class": "entry-content"})
 
     # Caso falhe, busca direto nas notícias da secretaria de saúde
@@ -72,12 +104,6 @@ def get_report_url(day, month):
                 "URL não encontrada nos boletins (https://coronavirus.rj.gov.br/boletins/) nem nas notícias da SES (https://www.saude.rj.gov.br/noticias/2020/)\n",
                 display=boletim,
             )
-
-            logger.warning(
-                "Boletim não indexado ou ainda não atualizado! Último boletim nos Boletins Coronavírus RJ: {display}\n",
-                display=soup[0],
-            )
-
             return
 
 

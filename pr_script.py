@@ -117,11 +117,9 @@ def main(day, month):
 
     for k in tables.keys():
         try:
-            tables[k] = pd.read_csv(tables[k], sep=";", skiprows=0, low_memory=False)
+            tables[k] = pd.read_csv(tables[k], sep=";", skiprows=0)
         except:
-            tables[k] = pd.read_csv(
-                tables[k], sep=";", skiprows=0, encoding="latin-1", low_memory=False
-            )
+            tables[k] = pd.read_csv(tables[k], sep=";", skiprows=0, encoding="latin-1")
 
         # Padroniza colunas
         tables[k] = tables[k].rename(columns=rename[k])

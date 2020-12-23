@@ -47,7 +47,6 @@ def _search_boletim_page(search):
                 if search in link:
                     boletim = link
                     break
-            print("aqui:", url, boletim)
             if not boletim:
                 url = url[:-1] + str(page_next)
                 page_next += 1
@@ -139,6 +138,13 @@ def treat_data(boletim):
             # Adiciona os itens na lista de casos e mortes por município
             cleaned_div += flatten
 
+    # 22/12: Conserta caso com \n entre cidade e valor
+    # x = [
+    #     i for i, e in enumerate(cleaned_div) if "São José do Vale do Rio Preto –" in e
+    # ][0]
+    # cleaned_div[x] += " " + cleaned_div[x + 1]
+    # cleaned_div.pop(x + 1)
+
     # (3) Identifica casos e mortes e cria dicionário de dados dos municípios
     init_casos = [
         i + 1
@@ -150,7 +156,7 @@ def treat_data(boletim):
         i + 1 for i, e in enumerate(cleaned_div) if "vítimas de Covid-19 no estado" in e
     ][0]
 
-    seps = "– |- "
+    seps = "– |- |– "
 
     content = {
         "confirmados": {

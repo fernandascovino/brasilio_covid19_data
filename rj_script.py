@@ -134,7 +134,7 @@ def treat_data(boletim):
             # Caso todas as cidades estejam na mesma tag ("p"), cria
             # lista por quebra de linha ("\n" transformado do html "</br>")
             nested = [x.split("\n") for x in text]
-            flatten = [item for sublist in nested for item in sublist]
+            flatten = [item for sublist in nested for item in sublist if len(item) > 0]
             # Adiciona os itens na lista de casos e mortes por município
             cleaned_div += flatten
 

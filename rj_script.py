@@ -129,14 +129,19 @@ def treat_data(boletim):
     # todas as cidades numa mesma tag ("p") até uma cidade por tag ("p").
     for i in range(len(aux)):
         text = aux[i].text.split("\r\n")
-        # Captura textos não vazios
-        if text not in ["\xa0", "\n", ""]:
-            # Caso todas as cidades estejam na mesma tag ("p"), cria
-            # lista por quebra de linha ("\n" transformado do html "</br>")
-            nested = [x.split("\n") for x in text]
-            flatten = [item for sublist in nested for item in sublist if len(item) > 0]
-            # Adiciona os itens na lista de casos e mortes por município
-            cleaned_div += flatten
+        # Caso todas as cidades estejam na mesma tag ("p"), cria
+        # lista por quebra de linha ("\n" transformado do html "</br>")
+        nested = [x.split("\n") for x in text]
+        # Remove textos vazios
+        null = ["\xa0", "\n", ""]
+        flatten = [
+            item
+            for sublist in nested
+            for item in sublist
+            if len(item) > 0 and item not in null
+        ]
+        # Adiciona os itens na lista de casos e mortes por município
+        cleaned_div += flatten
 
     # 22/12: Conserta caso com \n entre cidade e valor
     # x = [

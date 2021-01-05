@@ -73,10 +73,10 @@ def get_report_url(date, filename):
             return
 
 
-def main(day, month):
+def main(day, month, year):
 
     # (1) Busca URL do boletim de hoje
-    date = day + "/" + month + "/2020"
+    date = day + "/" + month + "/" + year
 
     try:
         tables = {

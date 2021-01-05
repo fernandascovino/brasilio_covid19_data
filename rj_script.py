@@ -56,21 +56,22 @@ def _search_boletim_page(search):
         return boletim
 
 
-def get_report_url(day, month):
+def get_report_url(day, month, year):
     """
     Busca URL do boletim da data especificada e retorna conteúdo.
 
     Args:
-        day (str): Dia no formato DD/MM/AAAA
-        month (str): Mês no formato DD/MM/AAAA       
+        day (str): Dia no formato DD
+        month (str): Mês no formato MM  
+        year (str): Ano no formato AA (ex: 2021 -> 21)     
     """
 
     # Busca primeiro no site de boletins
     try:
-        search = "coronavirus" + "-" + str(day) + "-" + str(month)
+        search = "coronavirus" + "-" + str(day) + "-" + str(month) + "-" + str(year)
         boletim = _search_boletim_page(search)
 
-        if day == "30" and month == "10":
+        if search == "coronavirus-31-10-20":
             boletim = "https://coronavirus.rj.gov.br/boletim/boletim-coronavirus-31-10-20-600-obitos-e-309-977-casos-confirmados-no-rj/"
 
         if boletim:
@@ -82,7 +83,7 @@ def get_report_url(day, month):
 
     # Caso falhe, busca direto nas notícias da secretaria de saúde
     except:
-        boletim = f"https://www.saude.rj.gov.br/noticias/2020/{month}/boletim-coronavirus-{day}{month}"
+        boletim = f"https://www.saude.rj.gov.br/noticias/20{year}/{month}/boletim-coronavirus-{day}{month}"
 
         try:
             content = (
@@ -92,10 +93,10 @@ def get_report_url(day, month):
             )
 
             # TODO: remover repeticao de codigo
-            logger.info("URL Boletim: {display}\n", display=boletim)
             logger.info(
                 "Site de boletins está fora do ar (https://coronavirus.rj.gov.br/boletins/). Dados retirados do site da secretaria de saúde.\n"
             )
+            logger.info("URL Boletim: {display}\n", display=boletim)
             return content
 
         except:
@@ -224,10 +225,10 @@ def treat_data(boletim):
     return df
 
 
-def main(day, month):
+def main(day, month, year):
 
     # (1) Busca URL do boletim da data especificada e retorna conteúdo.
-    boletim = get_report_url(day, month)
+    boletim = get_report_url(day, month, year[2:])
     df = treat_data(boletim)
 
     # (2) Conserta nomes de municípios com base no modelo da UF.

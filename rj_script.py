@@ -73,6 +73,8 @@ def get_report_url(day, month, year):
 
         if search == "coronavirus-31-10-20":
             boletim = "https://coronavirus.rj.gov.br/boletim/boletim-coronavirus-31-10-20-600-obitos-e-309-977-casos-confirmados-no-rj/"
+        if search == "coronavirus-08-11-20":
+            raise  # está errado neste site, mas correto nas notícias
 
         if boletim:
             logger.info("URL Boletim: {display}\n", display=boletim)
@@ -101,7 +103,7 @@ def get_report_url(day, month, year):
 
         except:
             logger.info(
-                "URL não encontrada nos boletins (https://coronavirus.rj.gov.br/boletins/) nem nas notícias da SES (https://www.saude.rj.gov.br/noticias/2020/)\n",
+                "URL não encontrada nos boletins (https://coronavirus.rj.gov.br/boletins/) nem nas notícias da SES (https://www.saude.rj.gov.br/noticias/)\n",
                 display=boletim,
             )
             return

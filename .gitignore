@@ -5,8 +5,9 @@
 !RJ_modelo.xlsx
 !PR_modelo.xlsx
 
-# MT Analysis
+# Analysis
 !br_mt_microdados.ipynb
+!br_rj_painel.ipynb
 
 # Cache
 .ipynb_checkpoints/
